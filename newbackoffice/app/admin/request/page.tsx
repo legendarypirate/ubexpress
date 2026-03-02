@@ -170,12 +170,14 @@ export default function RequestPage() {
         onPaginationChange={handlePaginationChange}
       />
 
-      {/* Create User Drawer */}
-      <RequestForm
-        isOpen={isDrawerOpen}
-        onClose={() => setIsDrawerOpen(false)}
-        onSubmit={handleCreateUser}
-      />
+      {/* Create User Drawer — mount only when open to avoid page sticking */}
+      {isDrawerOpen && (
+        <RequestForm
+          isOpen
+          onClose={() => setIsDrawerOpen(false)}
+          onSubmit={handleCreateUser}
+        />
+      )}
 
       {/* Edit Phone Modal */}
       <EditPhoneModal

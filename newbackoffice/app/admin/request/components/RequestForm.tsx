@@ -86,8 +86,11 @@ export default function RequestForm({
     }
   };
 
+  // Don't mount Sheet until open — avoids Radix blocking when toggling from closed to open
+  if (!isOpen) return null;
+
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Sheet open={true} onOpenChange={(open) => !open && onClose()}>
       <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
         <SheetHeader>
           <SheetTitle>Хэрэглэгч үүсгэх</SheetTitle>
