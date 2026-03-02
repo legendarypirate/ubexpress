@@ -312,7 +312,7 @@ export function Sidebar() {
   return (
     <aside className="w-64 bg-background border-r flex flex-col h-screen sticky top-0">
       <div className="p-4 border-b">
-        <h1 className="text-lg font-bold">Super Deliv</h1>
+        <h1 className="text-lg font-bold">Ub Express</h1>
       </div>
       <nav className="flex-1 overflow-y-auto p-4 space-y-1">
         {filteredMenuItems.map((item) => renderMenuItem(item))}
