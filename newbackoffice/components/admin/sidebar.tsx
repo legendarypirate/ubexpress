@@ -172,7 +172,7 @@ const menuItems: MenuItemType[] = [
         permission: "log:view_log",
       },
       {
-        key: "/admin/request",
+        key: "/admin/driver",
         icon: <FileText className="w-4 h-4" />,
         label: "Жолооч",
         permission: "log:view_log",

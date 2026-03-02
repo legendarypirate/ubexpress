@@ -91,7 +91,7 @@ export default function RequestForm({
 
   return (
     <Sheet open={true} onOpenChange={(open) => !open && onClose()}>
-      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+      <SheetContent side="right" className="z-[100] w-full sm:max-w-md overflow-y-auto bg-background data-[state=open]:!translate-x-0">
         <SheetHeader>
           <SheetTitle>Хэрэглэгч үүсгэх</SheetTitle>
         </SheetHeader>

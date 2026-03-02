@@ -93,6 +93,7 @@ const menuItems: MenuItemType[] = [
     children: [
       { key: "/admin/user", label: "Харилцагч нар", permission: "log:view_log" },
       { key: "/admin/request", label: "Жолооч", permission: "log:view_log" },
+      { key: "/admin/driver", label: "Жолооч", permission: "log:view_log" },
     ],
   },
   {

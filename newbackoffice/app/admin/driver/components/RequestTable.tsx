@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { User } from '../types/request';
 import {
   useReactTable,
@@ -12,62 +12,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { decryptData } from '@/lib/security/encryption';
-
-// Component to decrypt and display phone/address
-function DecryptedField({ value, fallback = '-' }: { value: string | null | undefined; fallback?: string }) {
-  const [decryptedValue, setDecryptedValue] = useState<string>(value || fallback);
-  const [isDecrypting, setIsDecrypting] = useState(false);
-
-  useEffect(() => {
-    const decryptField = async () => {
-      if (!value || value === fallback) {
-        setDecryptedValue(fallback);
-        return;
-      }
-
-      // Check if value looks encrypted (contains colons, typical of encrypted format)
-      const looksEncrypted = value.includes(':') && value.split(':').length >= 2;
-      
-      if (looksEncrypted) {
-        setIsDecrypting(true);
-        try {
-          const decrypted = await decryptData(value);
-          setDecryptedValue(decrypted);
-        } catch (error) {
-          // If decryption fails, it might not be encrypted - use original value
-          console.debug('Decryption failed, using original value:', error);
-          setDecryptedValue(value);
-        } finally {
-          setIsDecrypting(false);
-        }
-      } else {
-        // Not encrypted, use as-is
-        setDecryptedValue(value);
-      }
-    };
-
-    decryptField();
-  }, [value, fallback]);
-
-  if (isDecrypting) {
-    return <span className="text-gray-400">...</span>;
-  }
-
-  return <span>{decryptedValue}</span>;
-}
 
 interface RequestTableProps {
   users: User[];
   loading?: boolean;
-  onEdit: (user: User) => void;
+  onEdit?: (user: User) => void;
   onDelete: (user: User) => void;
-  pagination: {
-    current: number;
-    pageSize: number;
-    total: number;
-  };
-  onPaginationChange: (page: number, pageSize: number) => void;
 }
 
 const columnHelper = createColumnHelper<User>();
@@ -77,8 +27,6 @@ export default function RequestTable({
   loading = false,
   onEdit,
   onDelete,
-  pagination,
-  onPaginationChange,
 }: RequestTableProps) {
   const getRoleName = (roleId: number) => {
     const roles: Record<number, string> = {
@@ -99,10 +47,7 @@ export default function RequestTable({
       }),
       columnHelper.accessor('phone', {
         header: 'Phone',
-        cell: (info) => {
-          const value = info.getValue();
-          return <DecryptedField value={value} />;
-        },
+        cell: (info) => info.getValue() ?? '-',
       }),
       columnHelper.accessor('bank', {
         header: 'Bank',
@@ -118,14 +63,11 @@ export default function RequestTable({
       }),
       columnHelper.accessor('address', {
         header: 'Address',
-        cell: (info) => {
-          const value = info.getValue();
-          return (
-            <span className="max-w-xs truncate">
-              <DecryptedField value={value} />
-            </span>
-          );
-        },
+        cell: (info) => (
+          <span className="max-w-xs truncate">
+            {info.getValue() ?? '-'}
+          </span>
+        ),
       }),
       columnHelper.accessor('role_id', {
         header: 'Role',
@@ -139,7 +81,7 @@ export default function RequestTable({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => onEdit(info.row.original)}
+              onClick={() => onEdit?.(info.row.original)}
               title="Утасны дугаар засах"
             >
               <Edit className="h-4 w-4" />
@@ -159,12 +101,8 @@ export default function RequestTable({
     [onEdit, onDelete]
   );
 
-  const startIndex = (pagination.current - 1) * pagination.pageSize;
-  const endIndex = startIndex + pagination.pageSize;
-  const currentPageData = users.slice(startIndex, endIndex);
-
   const table = useReactTable({
-    data: currentPageData,
+    data: users,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -260,34 +198,6 @@ export default function RequestTable({
           )}
         </TableBody>
       </Table>
-      {pagination.total > 0 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t">
-          <div className="text-sm text-gray-600">
-            {startIndex + 1}-{Math.min(endIndex, pagination.total)} of {pagination.total} items
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPaginationChange(pagination.current - 1, pagination.pageSize)}
-              disabled={pagination.current === 1}
-            >
-              Previous
-            </Button>
-            <span className="text-sm">
-              Page {pagination.current} of {Math.ceil(pagination.total / pagination.pageSize)}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onPaginationChange(pagination.current + 1, pagination.pageSize)}
-              disabled={pagination.current >= Math.ceil(pagination.total / pagination.pageSize)}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

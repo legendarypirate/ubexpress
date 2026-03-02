@@ -1,12 +1,19 @@
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import RequestTable from './components/RequestTable';
 import RequestForm from './components/RequestForm';
 import { EditPhoneModal } from './components/RequestModals';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Search } from 'lucide-react';
 import { User } from './types/request';
 import {
@@ -17,8 +24,8 @@ import {
 } from './services/request.service';
 
 export default function RequestPage() {
-  // State
   const [users, setUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [pagination, setPagination] = useState({
@@ -26,61 +33,58 @@ export default function RequestPage() {
     pageSize: 100,
     total: 0,
   });
-
-  // Form/Drawer
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-
-  // Modals
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
 
-  // Filter users to show only role_id 3 (drivers) and apply search filter
-  const filteredUsers = useMemo(() => {
-    return users.filter(
-      (user) =>
-        user.role_id === 3 &&
-        user.username.toLowerCase().includes(searchText.toLowerCase())
-    );
-  }, [users, searchText]);
-
-  // Update pagination total when filtered data changes
-  useEffect(() => {
-    setPagination((prev) => ({
-      ...prev,
-      total: filteredUsers.length,
-    }));
-  }, [filteredUsers.length]);
-
-  // Load users on page load
-  useEffect(() => {
-    document.title = 'Хэрэглэгч';
-    loadUsers();
-  }, []);
-
-  const loadUsers = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const usersData = await fetchUsers();
-      setUsers(usersData);
+      const data = await fetchUsers();
+      setUsers(data);
     } catch (error: any) {
-      console.error('Error loading users:', error);
+      console.error('Error fetching users:', error);
       toast.error(error.message || 'Хэрэглэгч ачааллахад алдаа гарлаа');
     } finally {
       setLoading(false);
     }
   };
 
+  useEffect(() => {
+    document.title = 'Хэрэглэгч';
+    fetchData();
+  }, []);
+
+  // Filter users - only show drivers (role_id === 3) and apply search
+  useEffect(() => {
+    const filtered = users.filter(
+      (user) =>
+        user.role_id === 3 &&
+        user.username.toLowerCase().includes(searchText.toLowerCase())
+    );
+    setFilteredUsers(filtered);
+    setPagination((prev) => ({
+      ...prev,
+      total: filtered.length,
+    }));
+  }, [users, searchText]);
+
+  const currentPageData = filteredUsers.slice(
+    (pagination.current - 1) * pagination.pageSize,
+    pagination.current * pagination.pageSize
+  );
+
   const handleSearch = (value: string) => {
     setSearchText(value);
-    setPagination((prev) => ({ ...prev, current: 1 })); // Reset to first page when searching
+    setPagination((prev) => ({ ...prev, current: 1 }));
   };
 
   const handleCreateUser = async (payload: any) => {
     try {
-      const newUser = await createUser(payload);
-      setUsers((prev) => [...prev, newUser]);
+      await createUser(payload);
       toast.success('Хэрэглэгч амжилттай үүслээ');
       setIsDrawerOpen(false);
+      fetchData();
     } catch (error: any) {
       toast.error(error.message || 'Хэрэглэгч үүсгэхэд алдаа гарлаа');
     }
@@ -93,15 +97,12 @@ export default function RequestPage() {
 
   const handleEditPhone = async (phone: string) => {
     if (!editingUser) return;
-
     try {
-      const updatedUser = await updateUserPhone(editingUser.id, { phone });
-      setUsers((prev) =>
-        prev.map((user) => (user.id === editingUser.id ? updatedUser : user))
-      );
+      await updateUserPhone(editingUser.id, { phone });
       toast.success('Утасны дугаар амжилттай шинэчлэгдлээ');
       setIsEditModalOpen(false);
       setEditingUser(null);
+      fetchData();
     } catch (error: any) {
       toast.error(error.message || 'Шинэчлэхэд алдаа гарлаа');
     }
@@ -111,44 +112,31 @@ export default function RequestPage() {
     if (!confirm(`Та "${user.username}" хэрэглэгчийг устгахдаа итгэлтэй байна уу?`)) {
       return;
     }
-
     const deleteUserAsync = async () => {
       try {
         await deleteUser(user.id);
-        setUsers((prev) => prev.filter((u) => u.id !== user.id));
         toast.success(`"${user.username}" хэрэглэгч амжилттай устгагдлаа`);
+        fetchData();
       } catch (error: any) {
         toast.error(error.message || 'Устгахад алдаа гарлаа');
       }
     };
-
     deleteUserAsync();
-  };
-
-  const handlePaginationChange = (page: number, pageSize: number) => {
-    setPagination((prev) => ({
-      ...prev,
-      current: page,
-      pageSize: pageSize || prev.pageSize,
-    }));
   };
 
   return (
     <div className="w-full mt-6 px-4 pb-32">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">
           Хэрэглэгч (Зөвхөн Drivers)
         </h1>
-        <Button onClick={() => setIsDrawerOpen(true)}>
-          + Хэрэглэгч үүсгэх
-        </Button>
       </div>
 
-      <div className="mb-4 flex items-center gap-4">
+      <div className="mb-4 flex items-center gap-4 flex-wrap">
         <div className="text-sm text-gray-600">
           Нийт: {filteredUsers.length} driver(s)
         </div>
-        <div className="flex-1 max-w-xs">
+        <div className="flex-1 min-w-[250px]">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
@@ -159,27 +147,73 @@ export default function RequestPage() {
             />
           </div>
         </div>
+        <Button onClick={() => setIsDrawerOpen(true)}>
+          + Хэрэглэгч үүсгэх
+        </Button>
       </div>
 
       <RequestTable
-        users={filteredUsers}
+        users={currentPageData}
         loading={loading}
         onEdit={handleEdit}
         onDelete={handleDelete}
-        pagination={pagination}
-        onPaginationChange={handlePaginationChange}
       />
 
-      {/* Create User Drawer — mount only when open to avoid page sticking */}
-      {isDrawerOpen && (
-        <RequestForm
-          isOpen
-          onClose={() => setIsDrawerOpen(false)}
-          onSubmit={handleCreateUser}
-        />
-      )}
+      <div className="mt-4 flex justify-between items-center">
+        <div className="text-sm text-gray-600">
+          Нийт: {pagination.total} | Хуудас: {pagination.current} /{' '}
+          {Math.ceil(pagination.total / pagination.pageSize) || 1}
+        </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() =>
+              setPagination((prev) => ({ ...prev, current: Math.max(1, prev.current - 1) }))
+            }
+            disabled={pagination.current === 1}
+          >
+            Өмнөх
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() =>
+              setPagination((prev) => ({
+                ...prev,
+                current: Math.min(
+                  Math.ceil(pagination.total / pagination.pageSize) || 1,
+                  prev.current + 1
+                ),
+              }))
+            }
+            disabled={pagination.current >= Math.ceil(pagination.total / pagination.pageSize)}
+          >
+            Дараах
+          </Button>
+          <Select
+            value={pagination.pageSize.toString()}
+            onValueChange={(value) =>
+              setPagination((prev) => ({ ...prev, pageSize: parseInt(value), current: 1 }))
+            }
+          >
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+              <SelectItem value="200">200</SelectItem>
+              <SelectItem value="500">500</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
-      {/* Edit Phone Modal */}
+      <RequestForm
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        onSubmit={handleCreateUser}
+      />
+
       <EditPhoneModal
         isOpen={isEditModalOpen}
         onClose={() => {
@@ -192,4 +226,3 @@ export default function RequestPage() {
     </div>
   );
 }
-
