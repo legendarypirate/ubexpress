@@ -5,6 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -80,18 +86,14 @@ export default function RequestForm({
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed right-0 top-0 h-full w-full max-w-md bg-white shadow-xl border-l z-50 overflow-y-auto">
-      <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white">
-        <h2 className="text-xl font-semibold">Хэрэглэгч үүсгэх</h2>
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          ×
-        </Button>
-      </div>
+    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>Хэрэглэгч үүсгэх</SheetTitle>
+        </SheetHeader>
 
-      <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 mt-4">
         <div className="space-y-2">
           <Label htmlFor="username">Username *</Label>
           <Input
@@ -199,7 +201,8 @@ export default function RequestForm({
           {isSubmitting ? 'Хадгалж байна...' : 'Хадгалах'}
         </Button>
       </form>
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 
