@@ -57,22 +57,12 @@ export default function UserTable({
       columnHelper.accessor('username', {
         header: 'Username',
       }),
-      columnHelper.accessor('email', {
-        header: 'Email',
-        cell: (info) => info.getValue() || '-',
-      }),
+     
       columnHelper.accessor('phone', {
         header: 'Phone',
         cell: (info) => info.getValue() || '-',
       }),
-      columnHelper.accessor('bank', {
-        header: 'Bank',
-        cell: (info) => info.getValue() || '-',
-      }),
-      columnHelper.accessor('account_number', {
-        header: 'Account Number',
-        cell: (info) => info.getValue() || '-',
-      }),
+     
       columnHelper.accessor('report_price', {
         header: 'Report Price',
         cell: (info) => `${info.getValue() || 7000} ₮`,

@@ -16,6 +16,14 @@ exports.create = async (req, res) => {
   }
 
   try {
+    // Normalize phone (trim + digits-only) so create & login are consistent
+    let normalizedPhone = null;
+    if (req.body.phone) {
+      const trimmed = String(req.body.phone).trim();
+      const digitsOnly = trimmed.replace(/\D/g, "");
+      normalizedPhone = digitsOnly || trimmed;
+    }
+
     // Check if username already exists
     const existingUserByUsername = await User.findOne({
       where: { username: req.body.username }
@@ -30,9 +38,9 @@ exports.create = async (req, res) => {
     }
 
     // Check if phone already exists (if phone is provided)
-    if (req.body.phone) {
+    if (normalizedPhone) {
       const existingUserByPhone = await User.findOne({
-        where: { phone: req.body.phone }
+        where: { phone: normalizedPhone }
       });
 
       if (existingUserByPhone) {
@@ -50,7 +58,7 @@ exports.create = async (req, res) => {
     // Create a User object
     const user = {
       username: req.body.username,
-      phone: req.body.phone,
+      phone: normalizedPhone,
       email: req.body.email,
       role_id: req.body.role_id,
       password: hashedPassword,
@@ -163,6 +171,15 @@ exports.update = async (req, res) => {
   const id = req.params.id;
 
   try {
+    // Normalize phone (trim + digits-only) if updating phone
+    let normalizedPhone = null;
+    if (req.body.phone) {
+      const trimmed = String(req.body.phone).trim();
+      const digitsOnly = trimmed.replace(/\D/g, "");
+      normalizedPhone = digitsOnly || trimmed;
+      req.body.phone = normalizedPhone;
+    }
+
     // Check if username already exists (excluding current user)
     if (req.body.username) {
       const existingUserByUsername = await User.findOne({
@@ -182,10 +199,10 @@ exports.update = async (req, res) => {
     }
 
     // Check if phone already exists (excluding current user, if phone is provided)
-    if (req.body.phone) {
+    if (normalizedPhone) {
       const existingUserByPhone = await User.findOne({
         where: {
-          phone: req.body.phone,
+          phone: normalizedPhone,
           id: { [Op.ne]: id }
         }
       });

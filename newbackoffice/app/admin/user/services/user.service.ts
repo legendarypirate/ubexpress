@@ -1,43 +1,67 @@
 import { User, CreateUserPayload } from '../types/user';
-import { secureGet, securePost, securePut, secureDelete } from '@/lib/security/secure-api';
 
-// Fetch users (sensitive data is automatically encrypted/decrypted)
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
+
+const getAuthHeaders = () => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
+};
+
+// Fetch users (plain JSON, no field-level encryption)
 export const fetchUsers = async (): Promise<User[]> => {
-  const result = await secureGet<{ success: boolean; data: User[]; message?: string }>('/user');
-  
-  if (result.success) {
+  const response = await fetch(`${API_URL}/api/user`, {
+    headers: getAuthHeaders(),
+  });
+
+  const result = await response.json();
+  if (response.ok && result.success) {
     return result.data;
   }
   throw new Error(result.message || 'Failed to fetch users');
 };
 
-// Create user (sensitive fields are automatically encrypted)
+// Create user
 export const createUser = async (payload: CreateUserPayload): Promise<User> => {
-  const result = await securePost<{ success: boolean; data: User; message?: string }>('/user', payload);
-  
-  if (result.success) {
+  const response = await fetch(`${API_URL}/api/user`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  const result = await response.json();
+  if (response.ok && result.success) {
     return result.data;
   }
-  
   throw new Error(result.message || 'Failed to create user');
 };
 
-// Update user (sensitive fields are automatically encrypted)
+// Update user
 export const updateUser = async (userId: number, payload: Partial<CreateUserPayload>): Promise<User> => {
-  const result = await securePut<{ success: boolean; data: User; message?: string }>(`/user/${userId}`, payload);
-  
-  if (result.success) {
+  const response = await fetch(`${API_URL}/api/user/${userId}`, {
+    method: 'PUT',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+
+  const result = await response.json();
+  if (response.ok && result.success) {
     return result.data;
   }
-  
   throw new Error(result.message || 'Failed to update user');
 };
 
 // Delete user
 export const deleteUser = async (userId: number): Promise<void> => {
-  const result = await secureDelete<{ success: boolean; message?: string }>(`/user/${userId}`);
-  
-  if (!result.success) {
+  const response = await fetch(`${API_URL}/api/user/${userId}`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+
+  const result = await response.json();
+  if (!response.ok || !result.success) {
     throw new Error(result.message || 'Failed to delete user');
   }
 };
