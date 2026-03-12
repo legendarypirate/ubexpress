@@ -12,6 +12,7 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [messageType, setMessageType] = useState<"error" | "success" | "info">("info");
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
   const handleLogin = async () => {
     setMessage("");
@@ -23,14 +24,19 @@ export default function LandingPage() {
 
     setLoading(true);
     try {
-      // Use secure API route that encrypts credentials
-      // This goes through Next.js API route which proxies to backend
+      // Use API base from env (.env -> NEXT_PUBLIC_API_URL)
       console.log('Making login request...'); // Debug log
 
-      const response = await fetch('/api/secure/auth/login', {
+      if (!API_URL) {
+        setMessageType("error");
+        setMessage("API URL тохируулаагүй байна (NEXT_PUBLIC_API_URL)");
+        return;
+      }
+
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: 'include', // Important for cookies
+        credentials: 'include',
         body: JSON.stringify({ username, password }),
       });
 

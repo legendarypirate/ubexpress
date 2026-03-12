@@ -6,7 +6,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// Use server-side env so production can set API_URL at runtime (not baked in at build)
+const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 /**
  * Encrypt sensitive login data
@@ -22,9 +23,9 @@ export async function POST(request: NextRequest) {
   try {
     // Check if API URL is configured
     if (!API_URL || API_URL === '') {
-      console.error('NEXT_PUBLIC_API_URL is not configured');
+      console.error('API_URL / NEXT_PUBLIC_API_URL is not configured');
       return NextResponse.json(
-        { success: false, message: 'API URL is not configured. Please set NEXT_PUBLIC_API_URL environment variable.' },
+        { success: false, message: 'API URL is not configured. Set API_URL (or NEXT_PUBLIC_API_URL) in production.' },
         { status: 500 }
       );
     }
