@@ -111,7 +111,7 @@ export default function LandingPage() {
 
   const messageStyles = {
     success: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800",
-    error: "text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800",
+    error: "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800",
     info: "text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/30 border-slate-200 dark:border-slate-800",
   }[messageType];
 
@@ -120,7 +120,7 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-red-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-orange-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -132,13 +132,13 @@ export default function LandingPage() {
                 className="h-12 w-auto object-contain"
               />
               <span className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white uppercase italic">
-                BEE-<span className="text-red-600">DELIV</span>
+                BEE-<span className="text-orange-600">DELIV</span>
               </span>
             </div>
             <div className="hidden md:flex items-center space-x-8">
               <button
                 onClick={() => scrollToSection("hero")}
-                className="text-slate-700 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 transition-colors font-semibold"
+                className="text-slate-700 dark:text-slate-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors font-semibold"
               >
                 Нүүр
               </button>
@@ -173,7 +173,7 @@ export default function LandingPage() {
               <div className="space-y-4">
                 <h1 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white leading-tight uppercase italic tracking-tighter">
                   УЛААНБААТАРЫН <br />
-                  <span className="text-red-600">БОДИТ</span> ХҮРГЭЛТ
+                  <span className="text-orange-600">БОДИТ</span> ХҮРГЭЛТ
                 </h1>
                 <p className="text-xl text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl">
                   BEE-DELIV нь таны цаг хугацааг хэмнэж, ачаа тээшийг хамгийн хурдан, найдвартай хүргэх хотын шилдэг шийдэл юм.
@@ -181,7 +181,7 @@ export default function LandingPage() {
               </div>
               <div className="flex flex-wrap gap-4">
                 <div className="flex items-center space-x-2 bg-white dark:bg-slate-800 px-4 py-2 rounded-full shadow-sm border border-slate-100 dark:border-slate-700">
-                  <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse"></div>
+                  <div className="w-2 h-2 bg-orange-600 rounded-full animate-pulse"></div>
                   <span className="text-sm font-bold text-slate-700 dark:text-slate-300">ШУУРХАЙ</span>
                 </div>
                 <div className="flex items-center space-x-2 bg-white dark:bg-slate-800 px-4 py-2 rounded-full shadow-sm border border-slate-100 dark:border-slate-700">
@@ -189,7 +189,7 @@ export default function LandingPage() {
                   <span className="text-sm font-bold text-slate-700 dark:text-slate-300">ИТГЭЛТЭЙ</span>
                 </div>
                 <div className="flex items-center space-x-2 bg-white dark:bg-slate-800 px-4 py-2 rounded-full shadow-sm border border-slate-100 dark:border-slate-700">
-                  <div className="w-2 h-2 bg-red-600 rounded-full"></div>
+                  <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
                   <span className="text-sm font-bold text-slate-700 dark:text-slate-300">24/7 СИСТЕМ</span>
                 </div>
               </div>
@@ -197,11 +197,11 @@ export default function LandingPage() {
 
             {/* Login Card */}
             <div className="flex justify-center lg:justify-end">
-              <Card className="w-full max-w-md shadow-[0_20px_50px_rgba(220,38,38,0.1)] rounded-[2rem] border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md transition-all duration-500 hover:shadow-[0_20px_50px_rgba(220,38,38,0.2)]">
+              <Card className="w-full max-w-md shadow-[0_20px_50px_rgba(234,88,12,0.1)] rounded-[2rem] border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md transition-all duration-500 hover:shadow-[0_20px_50px_rgba(234,88,12,0.2)]">
                 <CardHeader className="space-y-4 pb-6 pt-10">
                   <div className="w-full flex justify-center">
                     <div className="relative group">
-                      <div className="absolute inset-0 bg-red-600 rounded-full blur-2xl opacity-10 group-hover:opacity-20 transition-opacity animate-pulse"></div>
+                      <div className="absolute inset-0 bg-orange-600 rounded-full blur-2xl opacity-10 group-hover:opacity-20 transition-opacity animate-pulse"></div>
                       <img
                         src="/beelogo.jpg"
                         alt="BeeDeliv Logo"
@@ -229,7 +229,7 @@ export default function LandingPage() {
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      className="h-14 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:border-red-600 dark:focus:border-red-500 focus:ring-0 transition-all duration-300 text-base"
+                      className="h-14 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:border-orange-600 dark:focus:border-orange-500 focus:ring-0 transition-all duration-300 text-base"
                       disabled={loading}
                     />
                   </div>
@@ -245,7 +245,7 @@ export default function LandingPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      className="h-14 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:border-red-600 dark:focus:border-red-500 focus:ring-0 transition-all duration-300 text-base"
+                      className="h-14 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:border-orange-600 dark:focus:border-orange-500 focus:ring-0 transition-all duration-300 text-base"
                       disabled={loading}
                     />
                   </div>
@@ -259,7 +259,7 @@ export default function LandingPage() {
 
                 <CardFooter className="flex flex-col space-y-6 px-8 pb-10 pt-4">
                   <Button
-                    className="w-full h-14 rounded-2xl text-base font-black uppercase italic tracking-wider bg-red-600 hover:bg-red-700 text-white shadow-[0_10px_20px_rgba(220,38,38,0.3)] hover:shadow-[0_10px_20px_rgba(220,38,38,0.5)] transition-all duration-300 transform hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    className="w-full h-14 rounded-2xl text-base font-black uppercase italic tracking-wider bg-orange-600 hover:bg-orange-700 text-white shadow-[0_10px_20px_rgba(234,88,12,0.3)] hover:shadow-[0_10px_20px_rgba(234,88,12,0.5)] transition-all duration-300 transform hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                     onClick={handleLogin}
                     disabled={loading}
                   >
@@ -295,8 +295,8 @@ export default function LandingPage() {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="p-8 border-2 border-slate-100 dark:border-slate-800 hover:border-red-600 dark:hover:border-red-500 transition-all duration-500 hover:shadow-2xl bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm group">
-              <div className="w-16 h-16 bg-slate-900 dark:bg-red-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+            <Card className="p-8 border-2 border-slate-100 dark:border-slate-800 hover:border-orange-600 dark:hover:border-orange-500 transition-all duration-500 hover:shadow-2xl bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm group">
+              <div className="w-16 h-16 bg-slate-900 dark:bg-orange-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
@@ -416,7 +416,7 @@ export default function LandingPage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
               <h2 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter">
-                АПП ТАТАЖ <span className="text-red-600">АВААРАЙ</span>
+                АПП ТАТАЖ <span className="text-orange-600">АВААРАЙ</span>
               </h2>
               <p className="text-xl text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
                 BEE-DELIV апп-ыг ашиглан хүргэлтээ бодит хугацаанд хянаж, захиалгаа хялбар удирдаарай.
@@ -427,7 +427,7 @@ export default function LandingPage() {
                   onClick={() => window.open("https://apps.apple.com", "_blank")}
                 >
                   <div className="flex items-center space-x-3">
-                    <svg className="w-8 h-8 fill-red-600 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
+                    <svg className="w-8 h-8 fill-orange-600 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
                       <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
                     </svg>
                     <div className="text-left">
@@ -441,7 +441,7 @@ export default function LandingPage() {
                   onClick={() => window.open("https://play.google.com", "_blank")}
                 >
                   <div className="flex items-center space-x-3">
-                    <svg className="w-8 h-8 fill-red-600 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
+                    <svg className="w-8 h-8 fill-orange-600 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
                       <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z" />
                     </svg>
                     <div className="text-left">
@@ -480,7 +480,7 @@ export default function LandingPage() {
                   className="h-12 w-auto object-contain bg-white rounded-lg p-1"
                 />
                 <span className="text-2xl font-black text-white uppercase italic tracking-tighter">
-                  BEE-<span className="text-red-600">DELIV</span>
+                  BEE-<span className="text-orange-600">DELIV</span>
                 </span>
               </div>
               <p className="text-slate-400 text-sm leading-relaxed font-medium">
@@ -530,19 +530,19 @@ export default function LandingPage() {
               <h4 className="text-white font-semibold mb-4">Холбоо барих</h4>
               <ul className="space-y-2 text-sm text-slate-400">
                 <li className="flex items-center space-x-2">
-                  <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
                   <span>98989898</span>
                 </li>
                 <li className="flex items-center space-x-2">
-                  <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                   <span>info@beedeliv.mn</span>
                 </li>
                 <li className="flex items-center space-x-2">
-                  <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
