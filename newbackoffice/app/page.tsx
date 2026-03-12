@@ -127,12 +127,12 @@ export default function LandingPage() {
           <div className="flex items-center justify-between h-20">
             <div className="flex items-center space-x-3">
               <img
-                src="/ublogo.jpg"
-                alt="UB Express Logo"
+                src="/beelogo.jpg"
+                alt="BeeDeliv Logo"
                 className="h-12 w-auto object-contain"
               />
               <span className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white uppercase italic">
-                UB-<span className="text-red-600">EXPRESS</span>
+                BEE-<span className="text-red-600">DELIV</span>
               </span>
             </div>
             <div className="hidden md:flex items-center space-x-8">
@@ -176,7 +176,7 @@ export default function LandingPage() {
                   <span className="text-red-600">БОДИТ</span> ХҮРГЭЛТ
                 </h1>
                 <p className="text-xl text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl">
-                  UB-EXPRESS нь таны цаг хугацааг хэмнэж, ачаа тээшийг хамгийн хурдан, найдвартай хүргэх хотын шилдэг шийдэл юм.
+                  BEE-DELIV нь таны цаг хугацааг хэмнэж, ачаа тээшийг хамгийн хурдан, найдвартай хүргэх хотын шилдэг шийдэл юм.
                 </p>
               </div>
               <div className="flex flex-wrap gap-4">
@@ -203,8 +203,8 @@ export default function LandingPage() {
                     <div className="relative group">
                       <div className="absolute inset-0 bg-red-600 rounded-full blur-2xl opacity-10 group-hover:opacity-20 transition-opacity animate-pulse"></div>
                       <img
-                        src="/ublogo.jpg"
-                        alt="UB Express Logo"
+                        src="/beelogo.jpg"
+                        alt="BeeDeliv Logo"
                         className="w-40 h-auto object-contain relative z-10 transition-transform duration-500 group-hover:scale-110"
                       />
                     </div>
@@ -419,7 +419,7 @@ export default function LandingPage() {
                 АПП ТАТАЖ <span className="text-red-600">АВААРАЙ</span>
               </h2>
               <p className="text-xl text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
-                UB-EXPRESS апп-ыг ашиглан хүргэлтээ бодит хугацаанд хянаж, захиалгаа хялбар удирдаарай.
+                BEE-DELIV апп-ыг ашиглан хүргэлтээ бодит хугацаанд хянаж, захиалгаа хялбар удирдаарай.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Button
@@ -457,8 +457,8 @@ export default function LandingPage() {
                 <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-3xl blur-2xl opacity-20 animate-pulse"></div>
                 <div className="relative bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-slate-800 dark:to-slate-700 rounded-3xl p-8 shadow-2xl">
                   <img
-                    src="/ublogo.jpg"
-                    alt="SuperDeli App"
+                    src="/beelogo.jpg"
+                    alt="BeeDeliv App"
                     className="w-64 h-auto object-contain mx-auto"
                   />
                 </div>
@@ -475,12 +475,12 @@ export default function LandingPage() {
             <div className="space-y-4">
               <div className="flex items-center space-x-3">
                 <img
-                  src="/ublogo.jpg"
-                  alt="UB Express Logo"
+                  src="/beelogo.jpg"
+                  alt="BeeDeliv Logo"
                   className="h-12 w-auto object-contain bg-white rounded-lg p-1"
                 />
                 <span className="text-2xl font-black text-white uppercase italic tracking-tighter">
-                  UB-<span className="text-red-600">EXPRESS</span>
+                  BEE-<span className="text-red-600">DELIV</span>
                 </span>
               </div>
               <p className="text-slate-400 text-sm leading-relaxed font-medium">
@@ -539,7 +539,7 @@ export default function LandingPage() {
                   <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
-                  <span>info@ub-express.mn</span>
+                  <span>info@beedeliv.mn</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -574,7 +574,7 @@ export default function LandingPage() {
           </div>
 
           <div className="border-t border-slate-800 pt-8 text-center text-sm text-slate-400">
-            <p>&copy; {new Date().getFullYear()} UB-EXPRESS. Бүх эрх хуулиар хамгаалагдсан.</p>
+            <p>&copy; {new Date().getFullYear()} BEE-DELIV. Бүх эрх хуулиар хамгаалагдсан.</p>
           </div>
         </div>
       </footer>
