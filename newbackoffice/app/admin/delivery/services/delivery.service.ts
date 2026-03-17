@@ -204,15 +204,18 @@ export const importDeliveries = async (deliveries: any[]): Promise<{ inserted?: 
   throw new Error(result.message || 'Import failed');
 };
 
-// Update delivery item
+// Update delivery item. When quantity is reduced, return_to_ware: true adds difference to good.stock; false leaves good.stock unchanged.
 export const updateDeliveryItem = async (
   deliveryId: number,
   itemId: number,
-  quantity: number
+  quantity: number,
+  options?: { return_to_ware?: boolean }
 ): Promise<DeliveryItem> => {
+  const body: { quantity: number; return_to_ware?: boolean } = { quantity };
+  if (options?.return_to_ware !== undefined) body.return_to_ware = options.return_to_ware;
   const result = await securePut<{ success: boolean; data: DeliveryItem; message?: string }>(
     `/delivery/${deliveryId}/items/${itemId}`,
-    { quantity }
+    body
   );
   
   if (result.success) {

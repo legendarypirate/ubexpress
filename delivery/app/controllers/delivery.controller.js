@@ -371,9 +371,12 @@ exports.getItemsByDeliveryId = async (req, res) => {
 };
 
 // Update delivery item
+// When quantity is reduced, return_to_ware (default true): add difference to good.stock.
+// When return_to_ware is false: only reduce in_delivery, good.stock unchanged (remaining stays with driver).
 exports.updateDeliveryItem = async (req, res) => {
   const { deliveryId, itemId } = req.params;
-  const { quantity } = req.body;
+  const { quantity, return_to_ware } = req.body;
+  const returnToWare = return_to_ware !== false; // default true
 
   if (!deliveryId || !itemId) {
     return res.status(400).json({ success: false, message: "Delivery ID and Item ID are required" });
@@ -417,7 +420,7 @@ exports.updateDeliveryItem = async (req, res) => {
               message: `Агуулахын үлдэгдэл хүрэлцэхгүй. "${good.name}" - Үлдэгдэл: ${currentStock}, Хүсэлт: ${quantityDiff}`,
             });
           }
-          
+
           // Move from stock to in_delivery
           await good.update(
             {
@@ -427,14 +430,21 @@ exports.updateDeliveryItem = async (req, res) => {
             { transaction: t }
           );
         } else if (quantityDiff < 0) {
-          // Quantity decreased - move from in_delivery back to stock
+          const absDiff = Math.abs(quantityDiff);
+          // Quantity decreased: always reduce in_delivery
           await good.update(
             {
-              stock: (good.stock || 0) + Math.abs(quantityDiff),
-              in_delivery: Math.max(0, (good.in_delivery || 0) - Math.abs(quantityDiff)),
+              in_delivery: Math.max(0, (good.in_delivery || 0) - absDiff),
             },
             { transaction: t }
           );
+          // Only add back to stock if admin chose "return to warehouse"
+          if (returnToWare) {
+            await good.update(
+              { stock: (good.stock || 0) + absDiff },
+              { transaction: t }
+            );
+          }
         }
 
         // Create history record
@@ -444,7 +454,9 @@ exports.updateDeliveryItem = async (req, res) => {
             type: quantityDiff > 0 ? 3 : 4, // 3 = added to delivery, 4 = removed from delivery
             amount: Math.abs(quantityDiff),
             delivery_id: deliveryId,
-            comment: `Барааны тоо хэмжээ өөрчлөгдсөн (${oldQuantity} → ${quantity})`,
+            comment: return_to_ware === false && quantityDiff < 0
+              ? `Барааны тоо хэмжээ өөрчлөгдсөн (${oldQuantity} → ${quantity}), үлдэгдэл жолооч дээр`
+              : `Барааны тоо хэмжээ өөрчлөгдсөн (${oldQuantity} → ${quantity})`,
           },
           { transaction: t }
         );

@@ -9,6 +9,13 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter,
+} from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import {
   Select,
@@ -241,14 +248,17 @@ export function EditModal({
   const [items, setItems] = useState<DeliveryItem[]>([]);
   const [loadingItems, setLoadingItems] = useState(false);
   const [editingItemData, setEditingItemData] = useState<Record<number, ItemEditRow>>({});
+  // When quantity is reduced: true = return remaining to warehouse (add to good.stock), false = keep with driver
+  const [returnToWareByItemId, setReturnToWareByItemId] = useState<Record<number, boolean>>({});
 
-  // Fetch items when modal opens
+  // Fetch items when drawer opens
   useEffect(() => {
     if (isOpen && delivery) {
       loadItems();
     } else {
       setItems([]);
       setEditingItemData({});
+      setReturnToWareByItemId({});
     }
   }, [isOpen, delivery]);
 
@@ -315,19 +325,35 @@ export function EditModal({
   const handleUpdateItem = async (itemId: number) => {
     if (!delivery) return;
     const row = editingItemData[itemId];
-    const newQuantity = row?.quantity ?? items.find((i) => i.id === itemId)?.quantity ?? 0;
+    const item = items.find((i) => i.id === itemId);
+    const initialQuantity = item?.quantity ?? 0;
+    const newQuantity = row?.quantity ?? initialQuantity;
     if (newQuantity < 0) {
       toast.error('Тоо хэмжээ буруу байна');
       return;
     }
 
+    const quantityReduced = initialQuantity > newQuantity;
+    const options = quantityReduced
+      ? { return_to_ware: returnToWareByItemId[itemId] ?? true }
+      : undefined;
+
     try {
-      await updateDeliveryItem(delivery.id, itemId, newQuantity);
+      await updateDeliveryItem(delivery.id, itemId, newQuantity, options);
       toast.success('Амжилттай шинэчлэгдлээ');
       await loadItems();
+      setReturnToWareByItemId((prev) => {
+        const next = { ...prev };
+        delete next[itemId];
+        return next;
+      });
     } catch (error: any) {
       toast.error(error.message || 'Шинэчлэхэд алдаа гарлаа');
     }
+  };
+
+  const setReturnToWare = (itemId: number, value: boolean) => {
+    setReturnToWareByItemId((prev) => ({ ...prev, [itemId]: value }));
   };
 
   const isItemDirty = (itemId: number) => {
@@ -353,12 +379,12 @@ export function EditModal({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Утас & Хаяг засах</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
+    <Sheet open={isOpen} onOpenChange={onClose}>
+      <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle>Утас & Хаяг засах</SheetTitle>
+        </SheetHeader>
+        <div className="space-y-4 px-1">
           <div className="space-y-2">
             <Label htmlFor="edit-phone">Утас *</Label>
             <Input
@@ -424,6 +450,7 @@ export function EditModal({
                       <TableHead>Тоо хэмжээ</TableHead>
                       <TableHead>Нэгж үнэ</TableHead>
                       <TableHead>Нийт үнэ</TableHead>
+                      <TableHead>Үлдэгдэл / Хаяг</TableHead>
                       <TableHead>Үйлдэл</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -434,6 +461,9 @@ export function EditModal({
                         unitPrice: 0,
                         lineTotal: 0,
                       };
+                      const initialQty = item.quantity;
+                      const remaining = initialQty > row.quantity ? initialQty - row.quantity : 0;
+                      const returnToWare = returnToWareByItemId[item.id] ?? true;
                       return (
                         <TableRow key={item.id}>
                           <TableCell className="font-medium">
@@ -479,6 +509,35 @@ export function EditModal({
                               placeholder="0"
                             />
                           </TableCell>
+                          <TableCell className="align-top">
+                            {remaining > 0 ? (
+                              <div className="space-y-2">
+                                <p className="text-sm font-medium text-amber-700">
+                                  Үлдэгдэл: {remaining} ширхэг
+                                </p>
+                                <Select
+                                  value={returnToWare ? 'ware' : 'driver'}
+                                  onValueChange={(v) =>
+                                    setReturnToWare(item.id, v === 'ware')
+                                  }
+                                >
+                                  <SelectTrigger className="w-full min-w-[140px]">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="ware">
+                                      Агуулах руу буцаах
+                                    </SelectItem>
+                                    <SelectItem value="driver">
+                                      Жолооч дээр үлдээх
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">—</span>
+                            )}
+                          </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <Button
@@ -507,14 +566,14 @@ export function EditModal({
             )}
           </div>
         </div>
-        <DialogFooter>
+        <SheetFooter className="flex-row gap-2 sm:gap-0">
           <Button variant="outline" onClick={onClose}>
             Цуцлах
           </Button>
           <Button onClick={onSave}>Хадгалах</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }
 
