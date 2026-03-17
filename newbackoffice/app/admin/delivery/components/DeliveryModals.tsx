@@ -206,6 +206,30 @@ interface EditModalProps {
   onFormDataChange: (data: { phone: string; address: string; price: string; delivery_date: string }) => void;
 }
 
+type ItemEditRow = { quantity: number; unitPrice: number; lineTotal: number };
+
+function initItemEditData(
+  items: DeliveryItem[],
+  totalPrice: number
+): Record<number, ItemEditRow> {
+  const totalQty = items.reduce((s, i) => s + i.quantity, 0);
+  const defaultUnit = totalQty > 0 ? totalPrice / totalQty : 0;
+  const rec: Record<number, ItemEditRow> = {};
+  items.forEach((item) => {
+    const q = item.quantity;
+    rec[item.id] = {
+      quantity: q,
+      unitPrice: defaultUnit,
+      lineTotal: defaultUnit * q,
+    };
+  });
+  return rec;
+}
+
+function sumLineTotals(data: Record<number, ItemEditRow>): number {
+  return Object.values(data).reduce((s, row) => s + row.lineTotal, 0);
+}
+
 export function EditModal({
   isOpen,
   onClose,
@@ -216,7 +240,7 @@ export function EditModal({
 }: EditModalProps) {
   const [items, setItems] = useState<DeliveryItem[]>([]);
   const [loadingItems, setLoadingItems] = useState(false);
-  const [editingQuantities, setEditingQuantities] = useState<Record<number, number>>({});
+  const [editingItemData, setEditingItemData] = useState<Record<number, ItemEditRow>>({});
 
   // Fetch items when modal opens
   useEffect(() => {
@@ -224,7 +248,7 @@ export function EditModal({
       loadItems();
     } else {
       setItems([]);
-      setEditingQuantities({});
+      setEditingItemData({});
     }
   }, [isOpen, delivery]);
 
@@ -234,12 +258,8 @@ export function EditModal({
     try {
       const fetchedItems = await fetchDeliveryItems(delivery.id);
       setItems(fetchedItems);
-      // Initialize editing quantities
-      const initialQuantities: Record<number, number> = {};
-      fetchedItems.forEach((item) => {
-        initialQuantities[item.id] = item.quantity;
-      });
-      setEditingQuantities(initialQuantities);
+      const totalPrice = Number(formData.price) || 0;
+      setEditingItemData(initItemEditData(fetchedItems, totalPrice));
     } catch (error) {
       console.error('Error loading items:', error);
       toast.error('Бараа ачааллахад алдаа гарлаа');
@@ -248,17 +268,55 @@ export function EditModal({
     }
   };
 
+  // Sync sum of line totals into delivery total (Үнэ) when item rows change
+  useEffect(() => {
+    if (items.length === 0 || Object.keys(editingItemData).length === 0) return;
+    const total = sumLineTotals(editingItemData);
+    const current = Number(formData.price) || 0;
+    if (Math.abs(total - current) > 0.001) {
+      onFormDataChange({ ...formData, price: total.toFixed(2) });
+    }
+  }, [editingItemData]);
+
+  const updateItemRow = (itemId: number, patch: Partial<ItemEditRow>) => {
+    setEditingItemData((prev) => {
+      const row = prev[itemId];
+      if (!row) return prev;
+      const next: ItemEditRow = { ...row, ...patch };
+      if (patch.quantity !== undefined || patch.unitPrice !== undefined) {
+        next.lineTotal = next.quantity * next.unitPrice;
+      }
+      return { ...prev, [itemId]: next };
+    });
+  };
+
   const handleQuantityChange = (itemId: number, quantity: number) => {
-    setEditingQuantities((prev) => ({
-      ...prev,
-      [itemId]: quantity,
-    }));
+    const q = Math.max(0, quantity);
+    updateItemRow(itemId, { quantity: q });
+  };
+
+  const handleUnitPriceChange = (itemId: number, value: string) => {
+    const unitPrice = parseFloat(value);
+    if (isNaN(unitPrice) || unitPrice < 0) return;
+    updateItemRow(itemId, { unitPrice });
+  };
+
+  const handleLineTotalChange = (itemId: number, value: string) => {
+    const lineTotal = parseFloat(value);
+    if (isNaN(lineTotal) || lineTotal < 0) return;
+    setEditingItemData((prev) => {
+      const row = prev[itemId];
+      if (!row) return prev;
+      const unitPrice = row.quantity > 0 ? lineTotal / row.quantity : 0;
+      return { ...prev, [itemId]: { ...row, lineTotal, unitPrice } };
+    });
   };
 
   const handleUpdateItem = async (itemId: number) => {
     if (!delivery) return;
-    const newQuantity = editingQuantities[itemId];
-    if (newQuantity === undefined || newQuantity < 0) {
+    const row = editingItemData[itemId];
+    const newQuantity = row?.quantity ?? items.find((i) => i.id === itemId)?.quantity ?? 0;
+    if (newQuantity < 0) {
       toast.error('Тоо хэмжээ буруу байна');
       return;
     }
@@ -270,6 +328,13 @@ export function EditModal({
     } catch (error: any) {
       toast.error(error.message || 'Шинэчлэхэд алдаа гарлаа');
     }
+  };
+
+  const isItemDirty = (itemId: number) => {
+    const item = items.find((i) => i.id === itemId);
+    const row = editingItemData[itemId];
+    if (!item || !row) return false;
+    return item.quantity !== row.quantity;
   };
 
   const handleDeleteItem = async (itemId: number) => {
@@ -351,58 +416,91 @@ export function EditModal({
             ) : items.length === 0 ? (
               <p className="text-sm text-gray-500">Бараа байхгүй</p>
             ) : (
-              <div className="border rounded-md">
+              <div className="border rounded-md overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Бараа</TableHead>
                       <TableHead>Тоо хэмжээ</TableHead>
+                      <TableHead>Нэгж үнэ</TableHead>
+                      <TableHead>Нийт үнэ</TableHead>
                       <TableHead>Үйлдэл</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {items.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell className="font-medium">
-                          {item.good?.name || 'Unknown'}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
+                    {items.map((item) => {
+                      const row = editingItemData[item.id] ?? {
+                        quantity: item.quantity,
+                        unitPrice: 0,
+                        lineTotal: 0,
+                      };
+                      return (
+                        <TableRow key={item.id}>
+                          <TableCell className="font-medium">
+                            {item.good?.name || 'Unknown'}
+                          </TableCell>
+                          <TableCell>
                             <Input
                               type="number"
                               min="0"
-                              value={editingQuantities[item.id] ?? item.quantity}
+                              className="w-20"
+                              value={row.quantity}
                               onChange={(e) =>
                                 handleQuantityChange(
                                   item.id,
                                   parseInt(e.target.value) || 0
                                 )
                               }
-                              className="w-20"
                             />
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleUpdateItem(item.id)}
-                              disabled={
-                                editingQuantities[item.id] === item.quantity
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              className="w-28"
+                              value={row.unitPrice === 0 ? '' : row.unitPrice}
+                              onChange={(e) =>
+                                handleUnitPriceChange(item.id, e.target.value)
                               }
-                            >
-                              Хадгалах
-                            </Button>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleDeleteItem(item.id)}
-                          >
-                            Устгах
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                              placeholder="0"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              className="w-28"
+                              value={row.lineTotal === 0 ? '' : row.lineTotal}
+                              onChange={(e) =>
+                                handleLineTotalChange(item.id, e.target.value)
+                              }
+                              placeholder="0"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleUpdateItem(item.id)}
+                                disabled={!isItemDirty(item.id)}
+                              >
+                                Хадгалах
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="destructive"
+                                onClick={() => handleDeleteItem(item.id)}
+                              >
+                                Устгах
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
