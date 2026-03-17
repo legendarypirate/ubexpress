@@ -25,11 +25,12 @@ export interface GoodRequest {
 }
 
 export interface CreateGoodRequestPayload {
-  type: number; // 2 = add stock, 3 = deduct stock
+  type: number; // 1 = create good, 2 = add stock (орлогодох), 3 = deduct stock (зарлагадах)
   amount: number;
   ware_id: number;
   merchant_id: number;
-  good_id: number;
+  good_id?: number;  // required for type 2, 3
+  name?: string;    // required for type 1 (new good name)
 }
 
 export interface ApproveRequestPayload {

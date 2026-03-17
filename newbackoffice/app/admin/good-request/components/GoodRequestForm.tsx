@@ -40,10 +40,11 @@ export default function GoodRequestForm({
   wareId,
 }: GoodRequestFormProps) {
   const [formData, setFormData] = useState({
-    type: '2', // 2 = add only (deduct removed)
+    type: '2', // 1 = Бараа үүсгэх, 2 = Орлогодох, 3 = Зарлагадах
     good_id: '',
     ware_id: wareId?.toString() || '',
     amount: '',
+    name: '', // for type 1: new good name
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [filteredGoods, setFilteredGoods] = useState<Good[]>([]);
@@ -55,6 +56,7 @@ export default function GoodRequestForm({
         good_id: '',
         ware_id: wareId?.toString() || '',
         amount: '',
+        name: '',
       });
     }
   }, [isOpen, wareId]);
@@ -75,8 +77,17 @@ export default function GoodRequestForm({
     e.preventDefault();
     if (isSubmitting) return;
 
-    if (!formData.good_id || !formData.ware_id || !formData.amount) {
-      alert('Бүх талбарыг бөглөнө үү');
+    const typeNum = parseInt(formData.type);
+    if (!formData.ware_id || !formData.amount) {
+      alert('Агуулах болон тоо ширхэг бөглөнө үү');
+      return;
+    }
+    if (typeNum === 1 && !formData.name?.trim()) {
+      alert('Барааны нэр оруулна уу');
+      return;
+    }
+    if ((typeNum === 2 || typeNum === 3) && !formData.good_id) {
+      alert('Бараа сонгоно уу');
       return;
     }
 
@@ -88,18 +99,17 @@ export default function GoodRequestForm({
 
     setIsSubmitting(true);
     try {
-      const selectedGood = goods.find((g) => g.id === parseInt(formData.good_id));
-      if (!selectedGood) {
-        throw new Error('Бараа олдсонгүй');
-      }
-
-      const payload = {
-        type: parseInt(formData.type), // 2 = add only
-        good_id: parseInt(formData.good_id),
+      const payload: any = {
+        type: typeNum,
         ware_id: parseInt(formData.ware_id),
         merchant_id: merchantId,
-        amount: amount,
+        amount,
       };
+      if (typeNum === 1) {
+        payload.name = formData.name.trim();
+      } else {
+        payload.good_id = parseInt(formData.good_id);
+      }
 
       await onSubmit(payload);
       onClose();
@@ -119,11 +129,28 @@ export default function GoodRequestForm({
         <SheetHeader>
           <SheetTitle>Барааны хүсэлт үүсгэх</SheetTitle>
           <SheetDescription>
-            Барааны нэмэх хүсэлт үүсгэнэ үү
+            Бараа үүсгэх, орлогодох эсвэл зарлагадах хүсэлт үүсгэнэ үү
           </SheetDescription>
         </SheetHeader>
 
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+
+          <div className="space-y-2">
+            <Label htmlFor="request_type">Хүсэлтийн төрөл</Label>
+            <Select
+              value={formData.type}
+              onValueChange={(value) => setFormData({ ...formData, type: value, good_id: '', name: '' })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Төрөл сонгох" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1">Бараа үүсгэх</SelectItem>
+                <SelectItem value="2">Орлогодох</SelectItem>
+                <SelectItem value="3">Зарлагадах</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
           <div className="space-y-2">
             <Label htmlFor="ware_id">Агуулах</Label>
@@ -144,28 +171,41 @@ export default function GoodRequestForm({
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="good_id">Бараа</Label>
-            <Select
-              value={formData.good_id}
-              onValueChange={(value) => setFormData({ ...formData, good_id: value })}
-              disabled={!formData.ware_id || filteredGoods.length === 0}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Бараа сонгох" />
-              </SelectTrigger>
-              <SelectContent>
-                {filteredGoods.map((good) => (
-                  <SelectItem key={good.id} value={good.id.toString()}>
-                    {good.name} (Үлдэгдэл: {good.stock})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {formData.ware_id && filteredGoods.length === 0 && (
-              <p className="text-sm text-gray-500">Энэ агуулахад бараа байхгүй байна</p>
-            )}
-          </div>
+          {parseInt(formData.type) === 1 ? (
+            <div className="space-y-2">
+              <Label htmlFor="name">Шинэ барааны нэр</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Барааны нэр оруулах"
+                required={parseInt(formData.type) === 1}
+              />
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label htmlFor="good_id">Бараа</Label>
+              <Select
+                value={formData.good_id}
+                onValueChange={(value) => setFormData({ ...formData, good_id: value })}
+                disabled={!formData.ware_id || filteredGoods.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Бараа сонгох" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredGoods.map((good) => (
+                    <SelectItem key={good.id} value={good.id.toString()}>
+                      {good.name} (Үлдэгдэл: {good.stock})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {formData.ware_id && filteredGoods.length === 0 && (
+                <p className="text-sm text-gray-500">Энэ агуулахад бараа байхгүй байна</p>
+              )}
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="amount">Тоо ширхэг</Label>

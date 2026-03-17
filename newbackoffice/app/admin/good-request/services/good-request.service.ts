@@ -33,16 +33,21 @@ export const fetchGoodRequests = async (merchantId?: number): Promise<GoodReques
 
 // Create request (for merchants)
 export const createGoodRequest = async (payload: CreateGoodRequestPayload): Promise<GoodRequest> => {
+  const body: Record<string, unknown> = {
+    type: payload.type,
+    amount: payload.amount,
+    ware_id: payload.ware_id,
+    merchant_id: payload.merchant_id,
+  };
+  if (payload.type === 1 && payload.name != null) {
+    body.name = payload.name;
+  } else if ((payload.type === 2 || payload.type === 3) && payload.good_id != null) {
+    body.good_id = payload.good_id;
+  }
   const response = await fetch(`${API_URL}/api/request/stock`, {
     method: 'POST',
     headers: getAuthHeaders(),
-    body: JSON.stringify({
-      type: payload.type,
-      amount: payload.amount,
-      ware_id: payload.ware_id,
-      merchant_id: payload.merchant_id,
-      good_id: payload.good_id,
-    }),
+    body: JSON.stringify(body),
   });
 
   const result = await response.json();
