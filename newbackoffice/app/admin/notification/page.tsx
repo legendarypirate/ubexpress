@@ -143,7 +143,7 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState(initialNotifications);
 
   useEffect(() => {
-    document.title = 'Мэдэгдэл';
+    document.title = 'Масс мэдэгдэл';
   }, []);
   const [showSendForm, setShowSendForm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -294,7 +294,7 @@ export default function NotificationsPage() {
       <div className="mb-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Мэдэгдэл удирдах</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Мэдэгдэл</h1>
             <p className="text-gray-600 mt-2">
               Өгөөж чихэр боов ХХК-ийн ажилчдад мэдэгдэл илгээх, удирдах
             </p>

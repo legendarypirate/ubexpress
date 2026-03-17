@@ -64,6 +64,7 @@ function hasAccessToPath(
 const menuItems: MenuItemType[] = [
   { key: "/admin", label: "Хянах самбар", permission: "dashboard:view_dashboard" },
   { key: "/admin/delivery", label: "Хүргэлт", permission: "delivery:view_delivery" },
+  { key: "/admin/search", label: "Хайх", permission: "delivery:view_delivery" },
   { key: "/admin/order", label: "Татан авалт", permission: "order:view_order" },
   { key: "/admin/region", label: "Бүс", permission: "region:view_region" },
   { key: "/admin/notification", label: "Масс мэдэгдэл", permission: "notification:view_notification" },

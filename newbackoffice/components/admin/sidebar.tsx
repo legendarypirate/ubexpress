@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
   Truck,
+  Search,
   ShoppingCart,
   Grid3x3,
   Bell,
@@ -98,6 +99,12 @@ const menuItems: MenuItemType[] = [
     key: "/admin/delivery",
     icon: <Truck className="w-4 h-4" />,
     label: "Хүргэлт",
+    permission: "delivery:view_delivery",
+  },
+  {
+    key: "/admin/search",
+    icon: <Search className="w-4 h-4" />,
+    label: "Хайх",
     permission: "delivery:view_delivery",
   },
   {

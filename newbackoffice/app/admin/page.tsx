@@ -15,7 +15,7 @@ export default function AdminHome() {
   const [merchantId, setMerchantId] = useState<number | null>(null);
 
   useEffect(() => {
-    document.title = 'Хүргэлтийн төлөвийн хяналтын самбар';
+    document.title = 'Хянах самбар';
     
     const loadData = async () => {
       try {
@@ -55,9 +55,7 @@ export default function AdminHome() {
 
   return (
     <div className="w-full mt-6 px-4 pb-32">
-      <h1 className="text-3xl font-bold text-gray-900 mb-6">
-        Хүргэлтийн төлөвийн хяналтын самбар
-      </h1>
+      <h1 className="text-3xl font-bold text-gray-900 mb-6">Хянах самбар</h1>
 
       {loading ? (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

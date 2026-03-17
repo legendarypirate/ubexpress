@@ -45,7 +45,7 @@ export default function UsersPage() {
   };
 
   useEffect(() => {
-    document.title = 'Хэрэглэгч';
+    document.title = 'Харилцагч нар';
     fetchData();
   }, []);
 
@@ -126,7 +126,7 @@ export default function UsersPage() {
   return (
     <div className="w-full mt-6 px-4 pb-32">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Хэрэглэгч (Зөвхөн Customers)</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Харилцагч нар</h1>
       </div>
 
       <div className="mb-4 flex items-center gap-4 flex-wrap">

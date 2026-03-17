@@ -22,7 +22,7 @@ export default function WarehousePage() {
 
   // Load initial data
   useEffect(() => {
-    document.title = 'Агуулах';
+    document.title = 'Агуулах бүртгэх';
 
     const loadData = async () => {
       setLoading(true);
@@ -73,7 +73,7 @@ export default function WarehousePage() {
   return (
     <div className="w-full mt-6 px-4 pb-32">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Агуулах</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Агуулах бүртгэх</h1>
         <Button onClick={() => setIsDrawerOpen(true)}>+ Агуулах үүсгэх</Button>
       </div>
 

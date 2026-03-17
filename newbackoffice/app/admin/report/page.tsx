@@ -545,7 +545,7 @@ export default function ReportPage() {
   return (
     <div className="w-full mt-6 px-4 pb-32">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Report</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Тайлан</h1>
       </div>
 
       {/* Filters Row */}

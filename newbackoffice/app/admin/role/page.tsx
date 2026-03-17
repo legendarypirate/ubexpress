@@ -79,7 +79,7 @@ export default function RolePage() {
   return (
     <div className="w-full mt-6 px-4 pb-32">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Role Permissions</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Эрхийн зохицуулалт</h1>
       </div>
 
       <RoleTable roles={roles} loading={loading} onEdit={handleEditRole} />

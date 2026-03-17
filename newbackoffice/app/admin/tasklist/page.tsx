@@ -893,9 +893,7 @@ function KanbanBoard({
   return (
     <div className="p-6 bg-gray-100 dark:bg-neutral-900 min-h-screen">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">
-          Самбар (Kanban)
-        </h1>
+        <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100">Даалгаврын самбар</h1>
       </div>
 
       <DndContext 
@@ -951,7 +949,7 @@ export default function TaskManagementPage() {
 
   // Fetch data on component mount
   useEffect(() => {
-    document.title = 'Үүрэг даалгаврын систем';
+    document.title = 'Даалгаврын самбар';
     fetchData();
   }, []);
 

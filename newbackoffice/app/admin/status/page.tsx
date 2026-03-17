@@ -14,7 +14,7 @@ export default function StatusPage() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
-    document.title = 'Хүргэлтийн төлөв';
+    document.title = 'Хүргэлтийн төлөвүүд';
     loadStatuses();
   }, []);
 
@@ -63,7 +63,7 @@ export default function StatusPage() {
   return (
     <div className="w-full mt-6 px-4 pb-32">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Төлөв</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Хүргэлтийн төлөвүүд</h1>
         <Button onClick={() => setIsDrawerOpen(true)}>+ Төлөв үүсгэх</Button>
       </div>
 
