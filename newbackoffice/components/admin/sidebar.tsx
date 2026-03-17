@@ -105,7 +105,7 @@ const menuItems: MenuItemType[] = [
     key: "/admin/search",
     icon: <Search className="w-4 h-4" />,
     label: "Хайх",
-    permission: "delivery:view_delivery",
+    permission: "settings:view_settings",
   },
   {
     key: "/admin/order",
