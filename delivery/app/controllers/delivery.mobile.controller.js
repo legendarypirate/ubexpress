@@ -370,35 +370,99 @@ exports.report = async (req, res) => {
   }
 };
 
-exports.completeDelivery = async (req, res) => {
-  // Handle file upload first
-  upload(req, res, async (err) => {
-    if (err instanceof multer.MulterError) {
-      return res.status(400).send({
-        success: false,
-        message: `File upload error: ${err.message}`,
-      });
-    } else if (err) {
-      return res.status(400).send({
-        success: false,
-        message: err.message || "File upload error.",
-      });
-    }
+/** Return delivery line items from in_delivery back to warehouse stock. */
+async function restoreItemsToStock(items, delivery, transaction, historyComment) {
+  for (const item of items) {
+    if (!item.good_id) continue;
+    const good = await Good.findByPk(item.good_id, { transaction });
+    if (!good) continue;
 
+    const qty = Number(item.quantity) || 0;
+    if (qty <= 0) continue;
+
+    const currentStock = Number(good.stock) || 0;
+    const currentInDelivery = Number(good.in_delivery) || 0;
+
+    await good.update(
+      {
+        stock: currentStock + qty,
+        in_delivery: Math.max(0, currentInDelivery - qty),
+      },
+      { transaction }
+    );
+
+    await db.good_histories.create(
+      {
+        good_id: item.good_id,
+        type: 4, // Delivery cancelled (back to stock)
+        amount: qty,
+        delivery_id: delivery.id,
+        comment: historyComment,
+      },
+      { transaction }
+    );
+  }
+}
+
+/** Move delivery line items from in_delivery to delivered counts. */
+async function markItemsAsDelivered(items, delivery, transaction) {
+  for (const item of items) {
+    if (!item.good_id) continue;
+    const good = await Good.findByPk(item.good_id, { transaction });
+    if (!good) continue;
+
+    const qty = Number(item.quantity) || 0;
+    if (qty <= 0) continue;
+
+    const currentInDelivery = Number(good.in_delivery) || 0;
+    const currentDelivered = Number(good.delivered) || 0;
+
+    await good.update(
+      {
+        in_delivery: Math.max(0, currentInDelivery - qty),
+        delivered: currentDelivered + qty,
+      },
+      { transaction }
+    );
+
+    await db.good_histories.create(
+      {
+        good_id: item.good_id,
+        type: 5, // Delivery completed (delivered)
+        amount: qty,
+        delivery_id: delivery.id,
+        comment: `Хүргэлт амжилттай (Delivery ID: ${delivery.delivery_id})`,
+      },
+      { transaction }
+    );
+  }
+}
+
+const TERMINAL_DELIVERY_STATUSES = [3, 4]; // delivered, cancelled — stock already settled
+
+exports.completeDelivery = async (req, res) => {
+  const handleComplete = async () => {
     const id = req.params.id;
     const { status, driver_comment, delivery_date } = req.body;
 
-    if (!status) {
+    if (status === undefined || status === null || status === '') {
       return res.status(400).send({
         success: false,
         message: "Status is required.",
       });
     }
 
+    const statusInt = parseInt(status, 10);
+    if (Number.isNaN(statusInt)) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid status.",
+      });
+    }
+
     const t = await db.sequelize.transaction();
 
     try {
-      // 🔹 Find delivery
       const delivery = await Delivery.findByPk(id, { transaction: t });
       if (!delivery) {
         await t.rollback();
@@ -408,27 +472,26 @@ exports.completeDelivery = async (req, res) => {
         });
       }
 
-      // 🔹 Prepare update fields
+      const previousStatus = Number(delivery.status);
+      const shouldRestoreToStock =
+        (statusInt === 4 || statusInt === 5) &&
+        !TERMINAL_DELIVERY_STATUSES.includes(previousStatus);
+
       const updateData = {
-        status: parseInt(status, 10),
-        delivered_at: new Date(), // ✅ Always set delivered_at to current time
+        status: statusInt,
+        delivered_at: new Date(),
       };
 
-      // ✅ Add driver comment if provided
       if (driver_comment !== undefined) {
         updateData.driver_comment = driver_comment;
       }
 
-      // ✅ Add delivery_date if provided (for postpone status 6)
       if (delivery_date !== undefined && delivery_date !== null && delivery_date !== '') {
         updateData.delivery_date = delivery_date;
       }
 
-      // ✅ If status is 3 (delivered) and image is provided, upload to Cloudinary
-      const statusInt = parseInt(status, 10);
       if (statusInt === 3 && req.file) {
         try {
-          // Upload to Cloudinary with resizing and compression
           const uploadResult = await new Promise((resolve, reject) => {
             const uploadStream = cloudinary.uploader.upload_stream(
               {
@@ -438,9 +501,9 @@ exports.completeDelivery = async (req, res) => {
                   {
                     width: 1920,
                     height: 1920,
-                    crop: 'limit', // Maintain aspect ratio, don't crop
-                    quality: 'auto:good', // Automatic quality optimization
-                    fetch_format: 'auto', // Auto-select best format (WebP, AVIF, etc.)
+                    crop: 'limit',
+                    quality: 'auto:good',
+                    fetch_format: 'auto',
                   }
                 ],
               },
@@ -452,7 +515,6 @@ exports.completeDelivery = async (req, res) => {
             uploadStream.end(req.file.buffer);
           });
 
-          // Save Cloudinary URL to database
           updateData.delivery_image = uploadResult.secure_url;
         } catch (cloudinaryError) {
           console.error("❌ Cloudinary upload error:", cloudinaryError);
@@ -464,109 +526,29 @@ exports.completeDelivery = async (req, res) => {
         }
       }
 
-      // 🔹 Update delivery
-      await delivery.update(updateData, { transaction: t });
-
       const items = await DeliveryItem.findAll({
-        where: { delivery_id: id },
+        where: { delivery_id: delivery.id },
         transaction: t,
       });
 
-      // ✅ If declined (status 4), move from in_delivery back to stock
-      if (statusInt === 4) {
-        for (const item of items) {
-          if (!item.good_id) continue;
-          const good = await Good.findByPk(item.good_id, { transaction: t });
-          if (!good) continue;
+      await delivery.update(updateData, { transaction: t });
 
-          // Move from in_delivery back to stock
-          await good.update(
-            {
-              stock: (good.stock || 0) + item.quantity,
-              in_delivery: Math.max(0, (good.in_delivery || 0) - item.quantity),
-            },
-            { transaction: t }
-          );
-
-          // Create history record
-          await db.good_histories.create(
-            {
-              good_id: item.good_id,
-              type: 4, // Delivery cancelled (back to stock)
-              amount: item.quantity,
-              delivery_id: delivery.id,
-              comment: `Жолооч цуцалсан (Delivery ID: ${delivery.delivery_id})`,
-            },
-            { transaction: t }
-          );
-        }
-      }
-      // ✅ If хаягаар очсон (status 5), move from in_delivery back to stock
-      else if (statusInt === 5) {
-        for (const item of items) {
-          if (!item.good_id) continue;
-          const good = await Good.findByPk(item.good_id, { transaction: t });
-          if (!good) continue;
-
-          // Move from in_delivery back to stock
-          await good.update(
-            {
-              stock: (good.stock || 0) + item.quantity,
-              in_delivery: Math.max(0, (good.in_delivery || 0) - item.quantity),
-            },
-            { transaction: t }
-          );
-
-          // Create history record
-          await db.good_histories.create(
-            {
-              good_id: item.good_id,
-              type: 4, // Delivery cancelled (back to stock)
-              amount: item.quantity,
-              delivery_id: delivery.id,
-              comment: `Хаягаар очсон (Delivery ID: ${delivery.delivery_id})`,
-            },
-            { transaction: t }
-          );
-        }
-      }
-      // ✅ If delivered (status 3), move from in_delivery to delivered
-      else if (statusInt === 3) {
-        for (const item of items) {
-          if (!item.good_id) continue;
-          const good = await Good.findByPk(item.good_id, { transaction: t });
-          if (!good) continue;
-
-          // Move from in_delivery to delivered
-          await good.update(
-            {
-              in_delivery: Math.max(0, (good.in_delivery || 0) - item.quantity),
-              delivered: (good.delivered || 0) + item.quantity,
-            },
-            { transaction: t }
-          );
-
-          // Create history record
-          await db.good_histories.create(
-            {
-              good_id: item.good_id,
-              type: 5, // Delivery completed (delivered)
-              amount: item.quantity,
-              delivery_id: delivery.id,
-              comment: `Хүргэлт амжилттай (Delivery ID: ${delivery.delivery_id})`,
-            },
-            { transaction: t }
-          );
-        }
+      if (shouldRestoreToStock) {
+        const historyComment =
+          statusInt === 4
+            ? `Жолооч цуцалсан (Delivery ID: ${delivery.delivery_id})`
+            : `Хаягаар очсон (Delivery ID: ${delivery.delivery_id})`;
+        await restoreItemsToStock(items, delivery, t, historyComment);
+      } else if (statusInt === 3 && previousStatus !== 3) {
+        await markItemsAsDelivered(items, delivery, t);
       }
 
-      // 🔹 Insert into histories
       await db.histories.create(
         {
           merchant_id: delivery.merchant_id,
           delivery_id: delivery.id,
           driver_id: delivery.driver_id,
-          status: parseInt(status, 10),
+          status: statusInt,
         },
         { transaction: t }
       );
@@ -575,7 +557,10 @@ exports.completeDelivery = async (req, res) => {
 
       res.send({
         success: true,
-        data: { message: `Delivery status updated to ${status} and history recorded.` },
+        data: {
+          message: `Delivery status updated to ${statusInt} and history recorded.`,
+          stock_restored: shouldRestoreToStock,
+        },
       });
     } catch (err) {
       await t.rollback();
@@ -585,7 +570,28 @@ exports.completeDelivery = async (req, res) => {
         message: err.message || "Server error while updating delivery.",
       });
     }
-  });
+  };
+
+  const contentType = req.headers['content-type'] || '';
+  if (contentType.includes('multipart/form-data')) {
+    upload(req, res, async (err) => {
+      if (err instanceof multer.MulterError) {
+        return res.status(400).send({
+          success: false,
+          message: `File upload error: ${err.message}`,
+        });
+      }
+      if (err) {
+        return res.status(400).send({
+          success: false,
+          message: err.message || "File upload error.",
+        });
+      }
+      await handleComplete();
+    });
+  } else {
+    await handleComplete();
+  }
 };
 
 

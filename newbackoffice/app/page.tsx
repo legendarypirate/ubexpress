@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 
+const APP_STORE_URL = "https://apps.apple.com/us/app/bee-deliv/id6759854417";
+const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.ub.express";
+
 export default function LandingPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -430,7 +433,7 @@ export default function LandingPage() {
               <div className="flex flex-wrap gap-4">
                 <Button
                   className="h-16 px-8 bg-slate-900 hover:bg-black text-white rounded-2xl shadow-xl transition-all duration-300 group"
-                  onClick={() => window.open("https://apps.apple.com", "_blank")}
+                  onClick={() => window.open(APP_STORE_URL, "_blank")}
                 >
                   <div className="flex items-center space-x-3">
                     <svg className="w-8 h-8 fill-orange-600 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
@@ -444,7 +447,7 @@ export default function LandingPage() {
                 </Button>
                 <Button
                   className="h-16 px-8 bg-white border-2 border-slate-900 hover:bg-slate-50 text-slate-900 rounded-2xl shadow-xl transition-all duration-300 group"
-                  onClick={() => window.open("https://play.google.com", "_blank")}
+                  onClick={() => window.open(PLAY_STORE_URL, "_blank")}
                 >
                   <div className="flex items-center space-x-3">
                     <svg className="w-8 h-8 fill-orange-600 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
@@ -539,7 +542,7 @@ export default function LandingPage() {
                   <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                   </svg>
-                  <span>98989898</span>
+                  <span>99633844</span>
                 </li>
                 <li className="flex items-center space-x-2">
                   <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
