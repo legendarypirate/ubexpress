@@ -88,6 +88,16 @@ app.all('*', (req, res) => {
   res.status(404).json({ message: "Route not found!" });
 });
 
+// Firebase Admin (FCM push) — log status at startup
+const fcmService = require("./app/services/fcm.service");
+if (fcmService.initFirebaseAdmin()) {
+  console.log("[FCM] Firebase Admin ready.");
+} else {
+  console.warn(
+    "[FCM] Firebase Admin NOT configured. Set FIREBASE_SERVICE_ACCOUNT_PATH or FIREBASE_SERVICE_ACCOUNT_JSON in .env / PM2."
+  );
+}
+
 // set port, listen for requests
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

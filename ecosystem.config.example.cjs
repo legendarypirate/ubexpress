@@ -21,6 +21,8 @@ module.exports = {
       env: {
         NODE_ENV: "production",
         PORT: 3101,
+        // FCM: path to Firebase service account JSON (same project as Flutter: express-dde3f)
+        FIREBASE_SERVICE_ACCOUNT_PATH: "/var/www/ubexpress/delivery/firebase-service-account.json",
       },
     },
     {
