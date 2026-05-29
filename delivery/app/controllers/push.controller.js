@@ -41,7 +41,7 @@ exports.getStatus = (req, res) => {
     env_path: process.env.FIREBASE_SERVICE_ACCOUNT_PATH || null,
     ios_apns_checklist: [
       "Firebase → Cloud Messaging → com.ub.express → upload .p8 to Development AND Production",
-      "Key ID: S28R5547ZZ, Team ID: B657WPQ8S9",
+      "Key ID must match your .p8 (e.g. CW3JG6DMR4 for AuthKey_CW3JG6DMR4.p8), Team ID: B657WPQ8S9",
       "Google Cloud → express-dde3f → enable Firebase Cloud Messaging API",
     ],
     hint: ready

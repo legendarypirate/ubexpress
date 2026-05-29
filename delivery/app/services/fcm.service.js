@@ -135,7 +135,7 @@ async function sendToTokens(tokens, title, body, data = {}) {
       }
       if (err?.code === "messaging/third-party-auth-error") {
         console.error(
-          "[FCM] iOS APNs auth failed. Fix in Firebase Console (not Flutter): Cloud Messaging → com.ub.express → re-upload AuthKey_S28R5547ZZ.p8 to BOTH Development and Production with Team ID B657WPQ8S9. Then test from Firebase Console → Messaging → Send test message to the iOS FCM token."
+          "[FCM] iOS APNs auth failed. Upload your .p8 in Firebase → Cloud Messaging → com.ub.express → Development AND Production. Key ID must match the filename (e.g. AuthKey_CW3JG6DMR4.p8 → Key ID CW3JG6DMR4). Team ID B657WPQ8S9. Server does not use the .p8 file."
         );
       }
       const code = res.error?.code;

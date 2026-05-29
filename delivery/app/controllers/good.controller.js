@@ -37,10 +37,19 @@ exports.create = (req, res) => {
 // Retrieve all Categories from the database.
 
 exports.findAll = async (req, res) => {
-  const merchant_id = req.query.merchant_id;
+  const rawMerchantId = req.query.merchant_id ?? req.query.user_id;
 
-  // Build condition only if merchant_id exists, exact match assumed
-  const condition = merchant_id ? { merchant_id: merchant_id } : undefined;
+  let condition;
+  if (rawMerchantId != null && rawMerchantId !== "") {
+    const merchantId = parseInt(rawMerchantId, 10);
+    if (Number.isNaN(merchantId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid merchant_id",
+      });
+    }
+    condition = { merchant_id: merchantId };
+  }
 
   try {
     const data = await Good.findAll({
@@ -48,23 +57,26 @@ exports.findAll = async (req, res) => {
       include: [
         {
           model: User,
-          as: 'merchant',
-          attributes: ['id', 'username'], // select fields needed
+          as: "merchant",
+          attributes: ["id", "username"],
         },
         {
           model: Ware,
-          as: 'ware',
-          attributes: ['id', 'name'],
+          as: "ware",
+          attributes: ["id", "name"],
         },
       ],
+      order: [["name", "ASC"]],
     });
 
-    res.send({
+    res.json({
       success: true,
       data,
+      count: data.length,
     });
   } catch (err) {
-    res.status(500).send({
+    console.error("[good.findAll] error:", err.message);
+    res.status(500).json({
       success: false,
       message: err.message || "Some error occurred while retrieving goods.",
     });

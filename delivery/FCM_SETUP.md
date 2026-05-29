@@ -90,10 +90,11 @@ Your APNs key type is correct (APNs enabled). If send still shows `sent=0 failed
 
 1. https://console.firebase.google.com/project/express-dde3f/settings/cloudmessaging
 2. App **`com.ub.express`**
-3. Upload **`AuthKey_S28R5547ZZ.p8`** to **both**:
+3. Upload your APNs `.p8` (e.g. **`AuthKey_CW3JG6DMR4.p8`**) to **both**:
    - Development APNs auth key
    - Production APNs auth key
-4. Key ID: `S28R5547ZZ` | Team ID: `B657WPQ8S9`
+4. **Key ID** = the part in the filename (e.g. `CW3JG6DMR4` for `AuthKey_CW3JG6DMR4.p8`) | **Team ID**: `B657WPQ8S9`
+5. Remove any old APNs key (e.g. `S28R5547ZZ`) if you created a new one
 
 ### B. Google Cloud (same project as Firebase)
 
