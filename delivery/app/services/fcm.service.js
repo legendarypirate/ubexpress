@@ -1,7 +1,31 @@
 const admin = require("firebase-admin");
+const fs = require("fs");
 const path = require("path");
 
 let initialized = false;
+
+/** Delivery API root (/var/www/ubexpress/delivery) */
+const DELIVERY_ROOT = path.join(__dirname, "../..");
+
+function resolveServiceAccountFile() {
+  const candidates = [];
+
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_PATH) {
+    const p = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
+    candidates.push(path.isAbsolute(p) ? p : path.join(DELIVERY_ROOT, p));
+  }
+
+  candidates.push(path.join(DELIVERY_ROOT, "firebase-service-account.json"));
+  candidates.push(path.join(DELIVERY_ROOT, "config", "firebase-service-account.json"));
+
+  for (const filePath of candidates) {
+    if (filePath && fs.existsSync(filePath)) {
+      return filePath;
+    }
+  }
+
+  return null;
+}
 
 function initFirebaseAdmin() {
   if (initialized) return true;
@@ -13,32 +37,32 @@ function initFirebaseAdmin() {
     }
 
     const jsonEnv = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-    const filePath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
-
     if (jsonEnv) {
       const serviceAccount = JSON.parse(jsonEnv);
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
       });
       initialized = true;
+      console.log("[FCM] Firebase Admin initialized from FIREBASE_SERVICE_ACCOUNT_JSON");
       return true;
     }
 
+    const filePath = resolveServiceAccountFile();
     if (filePath) {
-      const resolved = path.isAbsolute(filePath)
-        ? filePath
-        : path.join(__dirname, "../../", filePath);
-      // eslint-disable-next-line import/no-dynamic-require, global-require
-      const serviceAccount = require(resolved);
+      const raw = fs.readFileSync(filePath, "utf8");
+      const serviceAccount = JSON.parse(raw);
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
       });
       initialized = true;
+      console.log(`[FCM] Firebase Admin initialized from ${filePath}`);
       return true;
     }
 
     console.warn(
-      "[FCM] Firebase Admin not configured. Set FIREBASE_SERVICE_ACCOUNT_PATH or FIREBASE_SERVICE_ACCOUNT_JSON."
+      "[FCM] Firebase Admin not configured. Place firebase-service-account.json in:",
+      path.join(DELIVERY_ROOT, "firebase-service-account.json"),
+      "or set FIREBASE_SERVICE_ACCOUNT_PATH / FIREBASE_SERVICE_ACCOUNT_JSON"
     );
     return false;
   } catch (err) {
@@ -111,4 +135,5 @@ async function sendToTokens(tokens, title, body, data = {}) {
 module.exports = {
   initFirebaseAdmin,
   sendToTokens,
+  resolveServiceAccountFile,
 };

@@ -18,11 +18,17 @@ Flutter app uses Firebase project **`express-dde3f`**. The API must use a **serv
 
    Do **not** commit this file to git (already in `.gitignore` if listed).
 
-## 2. Configure environment
+## 2. Place the JSON on the server
 
-**Option A — file path (recommended)**
+**Easiest:** copy the downloaded key to:
 
-In `/var/www/ubexpress/delivery/.env`:
+```text
+/var/www/ubexpress/delivery/firebase-service-account.json
+```
+
+No env var required — the API auto-loads this file after deploy/restart.
+
+**Optional — explicit path in `.env`:**
 
 ```env
 FIREBASE_SERVICE_ACCOUNT_PATH=./firebase-service-account.json
