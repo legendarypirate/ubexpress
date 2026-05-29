@@ -126,9 +126,16 @@ async function sendToTokens(tokens, title, body, data = {}) {
       console.error(
         `[FCM] Send failed for token[${index}]: ${err?.code} — ${err?.message}`
       );
+      if (err) {
+        try {
+          console.error("[FCM] Full error:", JSON.stringify(err, null, 2));
+        } catch (_) {
+          /* ignore */
+        }
+      }
       if (err?.code === "messaging/third-party-auth-error") {
         console.error(
-          "[FCM] iOS APNs auth failed. Check: 1) Firebase Cloud Messaging → com.ub.express → Dev+Production APNs .p8  2) Key ID S28R5547ZZ + Team ID B657WPQ8S9  3) GCP enable Firebase Cloud Messaging API  4) service account project_id=express-dde3f"
+          "[FCM] iOS APNs auth failed. Fix in Firebase Console (not Flutter): Cloud Messaging → com.ub.express → re-upload AuthKey_S28R5547ZZ.p8 to BOTH Development and Production with Team ID B657WPQ8S9. Then test from Firebase Console → Messaging → Send test message to the iOS FCM token."
         );
       }
       const code = res.error?.code;
