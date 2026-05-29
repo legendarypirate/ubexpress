@@ -83,8 +83,15 @@ exports.create = async (req, res) => {
   }
 };
 
+const userListAttributes = {
+  exclude: ['password', 'fcm_token', 'fcm_platform'],
+};
+
 exports.findMerchants = (req, res) => {
-  User.findAll({ where: { role_id: 2 } }) // Adjust the role_id if needed
+  User.findAll({
+    where: { role_id: 2 },
+    attributes: userListAttributes,
+  })
     .then(data => {
       res.send({ success: true, data });
     })
