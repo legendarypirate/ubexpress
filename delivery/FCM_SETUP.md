@@ -79,3 +79,52 @@ If you see `NOT configured`, the env var is missing or the file path is wrong.
 ```
 
 Expected: `"sent": 1`
+
+---
+
+## iOS: `messaging/third-party-auth-error`
+
+Your APNs key type is correct (APNs enabled). If send still shows `sent=0 failed=1`:
+
+### A. Firebase Console (APNs)
+
+1. https://console.firebase.google.com/project/express-dde3f/settings/cloudmessaging
+2. App **`com.ub.express`**
+3. Upload **`AuthKey_S28R5547ZZ.p8`** to **both**:
+   - Development APNs auth key
+   - Production APNs auth key
+4. Key ID: `S28R5547ZZ` | Team ID: `B657WPQ8S9`
+
+### B. Google Cloud (same project as Firebase)
+
+1. https://console.cloud.google.com/apis/library?project=express-dde3f
+2. Enable **Firebase Cloud Messaging API**
+3. (Optional) Enable **Cloud Messaging** legacy API
+
+### C. Service account must be from `express-dde3f`
+
+```bash
+grep project_id /var/www/ubexpress/delivery/firebase-service-account.json
+# must show: "project_id": "express-dde3f"
+```
+
+If wrong, download a **new** key from:
+https://console.firebase.google.com/project/express-dde3f/settings/serviceaccounts/adminsdk
+
+Then:
+
+```bash
+pm2 restart nextjs-app --update-env
+curl -s https://beedeliv.mn/api/push/status
+```
+
+### D. Diagnose on server
+
+```bash
+cd /var/www/ubexpress/delivery
+node scripts/diagnose-fcm.js 52
+```
+
+### E. Fresh iOS token
+
+On iPhone: log out → log in again (updates `fcm_token` in DB), then Postman test again.

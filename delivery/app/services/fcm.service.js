@@ -55,7 +55,14 @@ function initFirebaseAdmin() {
         credential: admin.credential.cert(serviceAccount),
       });
       initialized = true;
-      console.log(`[FCM] Firebase Admin initialized from ${filePath}`);
+      console.log(
+        `[FCM] Firebase Admin initialized from ${filePath} (project_id=${serviceAccount.project_id})`
+      );
+      if (serviceAccount.project_id !== "express-dde3f") {
+        console.warn(
+          `[FCM] WARNING: project_id is "${serviceAccount.project_id}" but app uses express-dde3f — push will fail`
+        );
+      }
       return true;
     }
 
@@ -115,9 +122,15 @@ async function sendToTokens(tokens, title, body, data = {}) {
 
   response.responses.forEach((res, index) => {
     if (!res.success) {
+      const err = res.error;
       console.error(
-        `[FCM] Send failed for token[${index}]: ${res.error?.code} — ${res.error?.message}`
+        `[FCM] Send failed for token[${index}]: ${err?.code} — ${err?.message}`
       );
+      if (err?.code === "messaging/third-party-auth-error") {
+        console.error(
+          "[FCM] iOS APNs auth failed. Check: 1) Firebase Cloud Messaging → com.ub.express → Dev+Production APNs .p8  2) Key ID S28R5547ZZ + Team ID B657WPQ8S9  3) GCP enable Firebase Cloud Messaging API  4) service account project_id=express-dde3f"
+        );
+      }
       const code = res.error?.code;
       if (
         code === "messaging/invalid-registration-token" ||

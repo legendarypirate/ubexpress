@@ -16,15 +16,36 @@ exports.getStatus = (req, res) => {
   const fileExists = resolved ? fs.existsSync(resolved) : false;
   const ready = fcmService.initFirebaseAdmin();
 
+  let projectId = null;
+  let clientEmail = null;
+  if (fileExists && resolved) {
+    try {
+      const sa = JSON.parse(fs.readFileSync(resolved, "utf8"));
+      projectId = sa.project_id || null;
+      clientEmail = sa.client_email || null;
+    } catch (_) {
+      /* ignore */
+    }
+  }
+
   res.json({
     success: true,
     firebase_admin_ready: ready,
     service_account_file_exists: fileExists,
     service_account_path: resolved || EXPECTED_FCM_KEY_PATH,
+    project_id: projectId,
+    expected_project_id: "express-dde3f",
+    project_id_matches: projectId === "express-dde3f",
+    client_email: clientEmail,
     expected_path: EXPECTED_FCM_KEY_PATH,
     env_path: process.env.FIREBASE_SERVICE_ACCOUNT_PATH || null,
+    ios_apns_checklist: [
+      "Firebase → Cloud Messaging → com.ub.express → upload .p8 to Development AND Production",
+      "Key ID: S28R5547ZZ, Team ID: B657WPQ8S9",
+      "Google Cloud → express-dde3f → enable Firebase Cloud Messaging API",
+    ],
     hint: ready
-      ? "FCM is ready. Use POST /api/push/send to test."
+      ? "FCM Admin OK. If iOS fails with third-party-auth-error, fix APNs in Firebase (not the service account file type)."
       : `Upload Firebase service account JSON to: ${EXPECTED_FCM_KEY_PATH} then pm2 restart`,
   });
 };
