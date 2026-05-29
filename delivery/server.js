@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
@@ -79,6 +81,7 @@ require("./app/routes/user.routes")(app);
 require("./app/routes/delivery.mobile.routes")(app);
 require("./app/routes/order.mobile.routes")(app);
 require("./app/routes/good.mobile.routes")(app);
+require("./app/routes/push.routes")(app);
 
 // Add error handling for undefined routes
 app.all('*', (req, res) => {

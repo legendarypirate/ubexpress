@@ -201,6 +201,10 @@ exports.findAll = async (req, res) => {
             required: false, // allows type 1 to not fail when good_id is null
           },
         ],
+        order: [
+          ['createdAt', 'DESC'],
+          ['id', 'DESC'],
+        ],
       });
   
       res.send({

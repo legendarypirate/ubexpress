@@ -26,7 +26,13 @@ export const fetchGoodRequests = async (merchantId?: number): Promise<GoodReques
 
   const result = await response.json();
   if (result.success) {
-    return result.data;
+    const data = (result.data || []) as GoodRequest[];
+    return [...data].sort((a, b) => {
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      if (bTime !== aTime) return bTime - aTime;
+      return b.id - a.id;
+    });
   }
   throw new Error(result.message || 'Failed to fetch requests');
 };

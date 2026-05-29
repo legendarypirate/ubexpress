@@ -1,5 +1,6 @@
 module.exports = app => {
     const auth = require("../controllers/auth.controller");
+    const push = require("../controllers/push.controller");
   
     var router = require("express").Router();
   
@@ -19,6 +20,8 @@ module.exports = app => {
 
     router.post("/verifyOtp", auth.verifyOtp);
     router.post("/updateInfo", auth.updateInfo);
+
+    router.post("/fcm-token", push.registerToken);
 
   
     app.use("/api/auth", router);

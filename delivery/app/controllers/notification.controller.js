@@ -1,32 +1,59 @@
 const db = require("../models");
 const Notification = db.notifications;
+const User = db.users;
+const fcmService = require("../services/fcm.service");
 const Op = db.Sequelize.Op;
 
-// Create and Save a new Categories
-exports.create = (req, res) => {
-  // Validate request
+// Create and Save a new notification; optionally send FCM (role_id or user_ids)
+exports.create = async (req, res) => {
   if (!req.body.title || !req.body.body) {
-    res.status(400).send({
-      message: "Content can not be empty!"
+    return res.status(400).send({
+      message: "Content can not be empty!",
     });
-    return;
   }
 
-  // Create a Categories
   const newNot = {
     title: req.body.title,
     body: req.body.body,
-    type: req.body.type
+    type: req.body.type,
   };
 
-  // Save Categories in the database
-  Notification.create(newNot)
-  .then(data => {
-    res.json({ success: true, data: data });
-  })
-  .catch(err => {
-    res.status(500).json({ success: false, message: err.message || "Some error occurred while creating the Banner." });
-  });
+  try {
+    const data = await Notification.create(newNot);
+
+    let pushResult = null;
+    const { role_id, user_ids } = req.body;
+    if (role_id != null || (user_ids && user_ids.length > 0)) {
+      const where = { fcm_token: { [Op.ne]: null } };
+      if (user_ids?.length) where.id = user_ids;
+      if (role_id != null) where.role_id = role_id;
+
+      const users = await User.findAll({
+        where,
+        attributes: ["fcm_token"],
+      });
+      const tokens = users.map((u) => u.fcm_token).filter(Boolean);
+      if (tokens.length > 0) {
+        try {
+          pushResult = await fcmService.sendToTokens(
+            tokens,
+            req.body.title,
+            req.body.body,
+            { type: String(req.body.type || ""), notification_id: String(data.id) }
+          );
+        } catch (pushErr) {
+          console.error("[FCM] notification create push failed:", pushErr.message);
+        }
+      }
+    }
+
+    res.json({ success: true, data, push: pushResult });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message || "Some error occurred while creating notification.",
+    });
+  }
 };
 
 // Retrieve all Categories from the database.

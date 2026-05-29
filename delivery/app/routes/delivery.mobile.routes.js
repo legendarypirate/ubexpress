@@ -1,6 +1,11 @@
 module.exports = app => {
     const delivery = require("../controllers/delivery.mobile.controller.js");
+    const deliveryCtrl = require("../controllers/delivery.controller.js");
     var router = require("express").Router();
+
+    // Driver app: delivery detail by numeric id (no auth — matches Flutter driver flow)
+    router.get("/detail/:deliveryId/items", deliveryCtrl.getItemsByDeliveryId);
+    router.get("/detail/:id", deliveryCtrl.findOne);
 
     router.get("/reportcustomer", delivery.getCounts);
 

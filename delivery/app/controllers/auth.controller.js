@@ -105,6 +105,14 @@ exports.login = async (req, res) => {
 
     const token = jwt.sign(tokenPayload, secretKey, { expiresIn: "30m" });
 
+    const { fcm_token, platform } = req.body;
+    if (fcm_token) {
+      await user.update({
+        fcm_token,
+        fcm_platform: platform || "android",
+      });
+    }
+
     res.json({
       success: true,
       token,

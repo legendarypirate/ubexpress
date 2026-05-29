@@ -36,7 +36,15 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.INTEGER,
         allowNull: true,
         defaultValue: 7000
-      }
+      },
+      fcm_token: {
+        type: Sequelize.STRING(512),
+        allowNull: true,
+      },
+      fcm_platform: {
+        type: Sequelize.STRING(32),
+        allowNull: true,
+      },
     });
     return User;
   };

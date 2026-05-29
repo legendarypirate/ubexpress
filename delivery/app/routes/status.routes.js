@@ -3,15 +3,14 @@ module.exports = app => {
     const { authenticate } = require("../middleware/auth.middleware");
   
     var router = require("express").Router();
-    
-    // Apply authentication middleware to all routes
+
+    // Mobile driver app reads statuses without token
+    router.get("/", status.findAll);
+
     router.use(authenticate);
-  
+
     // Create a new Tutorial
     router.post("/", status.create);
-  
-    // Retrieve all Tutorials
-    router.get("/", status.findAll);
   
     // Retrieve all published Tutorials
     router.get("/published", status.findAllPublished);
