@@ -1,7 +1,33 @@
+const fs = require("fs");
+const path = require("path");
 const db = require("../models");
 const User = db.users;
 const fcmService = require("../services/fcm.service");
 const { Op } = db.Sequelize;
+
+const EXPECTED_FCM_KEY_PATH = path.join(
+  __dirname,
+  "../../firebase-service-account.json"
+);
+
+/** GET /api/push/status — check Firebase Admin setup (no secrets) */
+exports.getStatus = (req, res) => {
+  const resolved = fcmService.resolveServiceAccountFile();
+  const fileExists = resolved ? fs.existsSync(resolved) : false;
+  const ready = fcmService.initFirebaseAdmin();
+
+  res.json({
+    success: true,
+    firebase_admin_ready: ready,
+    service_account_file_exists: fileExists,
+    service_account_path: resolved || EXPECTED_FCM_KEY_PATH,
+    expected_path: EXPECTED_FCM_KEY_PATH,
+    env_path: process.env.FIREBASE_SERVICE_ACCOUNT_PATH || null,
+    hint: ready
+      ? "FCM is ready. Use POST /api/push/send to test."
+      : `Upload Firebase service account JSON to: ${EXPECTED_FCM_KEY_PATH} then pm2 restart`,
+  });
+};
 
 /** POST /api/auth/fcm-token — save device token for logged-in user */
 exports.registerToken = async (req, res) => {
@@ -91,6 +117,15 @@ exports.sendPush = async (req, res) => {
     });
   } catch (err) {
     console.error("[FCM] sendPush error:", err);
-    res.status(500).json({ success: false, message: err.message });
+    const isConfig = err.message?.includes("not configured");
+    res.status(500).json({
+      success: false,
+      message: err.message,
+      ...(isConfig && {
+        expected_path: EXPECTED_FCM_KEY_PATH,
+        file_exists: fs.existsSync(EXPECTED_FCM_KEY_PATH),
+        check_status: "GET /api/push/status",
+      }),
+    });
   }
 };
