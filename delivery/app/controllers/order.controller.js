@@ -3,6 +3,7 @@ const Order = db.orders;
 const Op = db.Sequelize.Op;
 const User = db.users;
 const Status = db.statuses;
+const driverPush = require("../services/driverPush.service");
 
 // Create and Save a new Categories
 exports.create = (req, res) => {
@@ -56,6 +57,12 @@ exports.allocateDeliveries = async (req, res) => {
           },
         }
       );
+
+      try {
+        await driverPush.notifyDriverDeliveryAllocated(driver_id, delivery_ids);
+      } catch (pushErr) {
+        console.error("[FCM] order allocation push failed:", pushErr.message);
+      }
   
       res.json({
         success: true,

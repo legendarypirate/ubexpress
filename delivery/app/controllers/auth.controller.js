@@ -152,6 +152,14 @@ exports.mobile_login = async (req, res) => {
 
     const token = jwt.sign({ id: user.id, phone: user.phone, role: user.role }, secretKey, { expiresIn: "30m" });
 
+    const { fcm_token, platform } = req.body;
+    if (fcm_token) {
+      await user.update({
+        fcm_token,
+        fcm_platform: platform || "android",
+      });
+    }
+
     res.json({
       success: true,
       token,

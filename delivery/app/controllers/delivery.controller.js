@@ -6,6 +6,7 @@ const Status = db.statuses;
 const Order = db.orders;
 const Good = db.goods;
 const DeliveryItem = db.delivery_items;
+const driverPush = require("../services/driverPush.service");
 
 
 const generateDeliveryId = async () => {
@@ -616,6 +617,13 @@ exports.importExcelDeliveries = async (req, res) => {
     await db.histories.bulkCreate(historyRecords, { transaction: t });
 
     await t.commit();
+
+    // Push to driver device (web + app allocation); do not fail HTTP if FCM fails
+    try {
+      await driverPush.notifyDriverDeliveryAllocated(driver_id, delivery_ids);
+    } catch (pushErr) {
+      console.error("[FCM] allocation push failed:", pushErr.message);
+    }
 
     res.json({
       success: true,
