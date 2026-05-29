@@ -87,20 +87,32 @@ exports.sendPush = async (req, res) => {
 
     const users = await User.findAll({
       where,
-      attributes: ["id", "fcm_token"],
+      attributes: ["id", "fcm_token", "fcm_platform"],
     });
 
     const tokens = users.map((u) => u.fcm_token).filter(Boolean);
 
     if (tokens.length === 0) {
+      console.warn("[FCM] sendPush: no tokens for", { user_ids, role_id });
       return res.json({
         success: true,
         message: "No devices with FCM tokens found",
         sent: 0,
+        users: user_ids || [],
       });
     }
 
+    users.forEach((u) => {
+      console.log(
+        `[FCM] sendPush → user ${u.id} platform=${u.fcm_platform || "unknown"} token=${(u.fcm_token || "").slice(0, 12)}...`
+      );
+    });
+
     const result = await fcmService.sendToTokens(tokens, title, body, data || {});
+
+    console.log(
+      `[FCM] sendPush result: sent=${result.successCount} failed=${result.failureCount} targets=${tokens.length}`
+    );
 
     if (result.invalidTokens.length > 0) {
       await User.update(
@@ -114,6 +126,10 @@ exports.sendPush = async (req, res) => {
       sent: result.successCount,
       failed: result.failureCount,
       targets: tokens.length,
+      platforms: users.map((u) => ({
+        id: u.id,
+        platform: u.fcm_platform,
+      })),
     });
   } catch (err) {
     console.error("[FCM] sendPush error:", err);

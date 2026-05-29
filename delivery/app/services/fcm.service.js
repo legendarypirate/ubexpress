@@ -115,6 +115,9 @@ async function sendToTokens(tokens, title, body, data = {}) {
 
   response.responses.forEach((res, index) => {
     if (!res.success) {
+      console.error(
+        `[FCM] Send failed for token[${index}]: ${res.error?.code} — ${res.error?.message}`
+      );
       const code = res.error?.code;
       if (
         code === "messaging/invalid-registration-token" ||
