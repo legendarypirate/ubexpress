@@ -7,6 +7,9 @@ module.exports = app => {
     router.get("/detail/:deliveryId/items", deliveryCtrl.getItemsByDeliveryId);
     router.get("/detail/:id", deliveryCtrl.findOne);
 
+    // Merchant app: create delivery (same as POST /api/delivery, no auth)
+    router.post("/", deliveryCtrl.create);
+
     router.get("/reportcustomer", delivery.getCounts);
 
     router.get("/reportdata", delivery.getDeliveryStatusSummary);

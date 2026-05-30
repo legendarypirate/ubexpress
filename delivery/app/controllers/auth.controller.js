@@ -180,7 +180,10 @@ exports.verifyToken = (req, res, next) => {
   const authHeader = req.headers["authorization"];
   
   if (!authHeader) {
-    return res.status(401).json({ message: "Token is missing!" });
+    return res.status(401).json({
+      success: false,
+      message: "Таны эрх хүрэхгүй байна",
+    });
   }
 
   // Extract token (handle both "Bearer token" and just "token" formats)
@@ -189,12 +192,18 @@ exports.verifyToken = (req, res, next) => {
     : authHeader;
 
   if (!token) {
-    return res.status(401).json({ message: "Token is missing!" });
+    return res.status(401).json({
+      success: false,
+      message: "Таны эрх хүрэхгүй байна",
+    });
   }
 
   jwt.verify(token, secretKey, (err, decoded) => {
     if (err) {
-      return res.status(401).json({ message: "Token is invalid!" });
+      return res.status(401).json({
+        success: false,
+        message: "Таны эрх хүрэхгүй байна",
+      });
     }
     req.user = decoded;
     next();

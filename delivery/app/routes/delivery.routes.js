@@ -3,18 +3,18 @@ module.exports = app => {
     const { authenticate } = require("../middleware/auth.middleware");
   
     var router = require("express").Router();
-    
-    // Apply authentication middleware to all routes
+
+    // Mobile merchant app (Flutter): create delivery without JWT
+    router.post("/", delivery.create);
+
     router.use(authenticate);
+
     router.get("/statistic", delivery.statistic);
-  router.post("/status", delivery.status);
-  router.post("/update-delivery-dates", delivery.updateDeliveryDates);
+    router.post("/status", delivery.status);
+    router.post("/update-delivery-dates", delivery.updateDeliveryDates);
 
     router.post("/allocate", delivery.allocateDeliveries);
     router.get("/findAllWithDate", delivery.findAllWithDate);
-
-    // Create a new Tutorial
-    router.post("/", delivery.create);
   
     // Retrieve all Tutorials
     router.get("/", delivery.findAll);
