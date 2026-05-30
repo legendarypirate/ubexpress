@@ -4,20 +4,18 @@ module.exports = app => {
   
     var router = require("express").Router();
 
-    // Mobile merchant app (Flutter): create delivery without JWT
+    // Flutter admin / merchant app: these calls do not send Authorization
     router.post("/", delivery.create);
+    router.get("/", delivery.findAll);
+    router.post("/allocate", delivery.allocateDeliveries);
+    router.post("/status", delivery.status);
+    router.put("/:id", delivery.update);
 
     router.use(authenticate);
 
     router.get("/statistic", delivery.statistic);
-    router.post("/status", delivery.status);
     router.post("/update-delivery-dates", delivery.updateDeliveryDates);
-
-    router.post("/allocate", delivery.allocateDeliveries);
     router.get("/findAllWithDate", delivery.findAllWithDate);
-  
-    // Retrieve all Tutorials
-    router.get("/", delivery.findAll);
     router.get("/product-report", delivery.findAllForProductReport);
     router.get('/delivery-status-counts', delivery.getStatusCounts);
 
@@ -35,9 +33,6 @@ module.exports = app => {
     // Retrieve a single Tutorial with id
     router.get("/:id", delivery.findOne);
   
-    // Update a Tutorial with id
-    router.put("/:id", delivery.update);
-
     router.post('/import', delivery.importExcelDeliveries);
 
     // Delete a Tutorial with id

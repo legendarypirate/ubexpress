@@ -3,19 +3,16 @@ module.exports = app => {
     const { authenticate } = require("../middleware/auth.middleware");
   
     var router = require("express").Router();
-    
-    // Apply authentication middleware to all routes
+
+    // Flutter admin app: list users (merchants/drivers) without JWT
+    router.get("/", user.findAll);
+    router.get("/merchant", user.findMerchants);
+    router.get("/drivers", user.findDrivers);
+    router.get("/published", user.findAllPublished);
+
     router.use(authenticate);
 
-    // Create a new Tutorial
     router.post("/", user.create);
-    router.get("/merchant", user.findMerchants);
-
-    // Retrieve all Tutorials
-  
-    // Retrieve all published Tutorials
-    router.get("/published", user.findAllPublished);
-    router.get("/drivers", user.findDrivers); // ✅ NEW ROUTE HERE
 
     // Retrieve a single Tutorial with id
     router.get("/:id", user.findOne);
@@ -28,7 +25,6 @@ module.exports = app => {
   
     // Delete all Tutorials
     router.delete("/", user.deleteAll);
-    router.get("/", user.findAll);
 
     app.use('/api/user', router);
   };
