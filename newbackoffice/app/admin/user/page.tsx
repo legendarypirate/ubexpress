@@ -54,7 +54,8 @@ export default function UsersPage() {
     const filtered = users.filter(
       (user) =>
         user.role_id === 2 &&
-        user.username.toLowerCase().includes(searchText.toLowerCase())
+        user.username.toLowerCase().includes(searchText.toLowerCase()) ||
+        (user.email?.toLowerCase().includes(searchText.toLowerCase()) ?? false)
     );
     setFilteredUsers(filtered);
     setPagination((prev) => ({
@@ -138,7 +139,7 @@ export default function UsersPage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Search by username..."
+              placeholder="Search by username or email..."
               value={searchText}
               onChange={(e) => handleSearch(e.target.value)}
               className="pl-10"

@@ -57,7 +57,10 @@ export default function UserTable({
       columnHelper.accessor('username', {
         header: 'Username',
       }),
-     
+      columnHelper.accessor('email', {
+        header: 'Email',
+        cell: (info) => info.getValue() || '-',
+      }),
       columnHelper.accessor('phone', {
         header: 'Phone',
         cell: (info) => info.getValue() || '-',
@@ -129,8 +132,6 @@ export default function UserTable({
               <TableHead>Username</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Phone</TableHead>
-              <TableHead>Bank</TableHead>
-              <TableHead>Account Number</TableHead>
               <TableHead>Report Price</TableHead>
               <TableHead>Role</TableHead>
               <TableHead>Created At</TableHead>
@@ -141,39 +142,11 @@ export default function UserTable({
           <TableBody>
             {[1, 2, 3].map((i) => (
               <TableRow key={i}>
-                <TableCell>
-                  <Skeleton className="h-4 w-8" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-24" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-32" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-20" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-24" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-24" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-32" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-16" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-32" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-32" />
-                </TableCell>
-                <TableCell>
-                  <Skeleton className="h-4 w-16" />
-                </TableCell>
+                {Array.from({ length: 9 }).map((_, j) => (
+                  <TableCell key={j}>
+                    <Skeleton className="h-4 w-24" />
+                  </TableCell>
+                ))}
               </TableRow>
             ))}
           </TableBody>
@@ -201,7 +174,7 @@ export default function UserTable({
         <TableBody>
           {table.getRowModel().rows.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={11} className="text-center text-gray-400 py-8">
+              <TableCell colSpan={9} className="text-center text-gray-400 py-8">
                 Хэрэглэгч олдсонгүй
               </TableCell>
             </TableRow>
