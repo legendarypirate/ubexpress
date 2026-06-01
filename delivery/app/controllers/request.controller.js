@@ -3,6 +3,7 @@ const Request = db.requests;
 const User = db.users;
 const Ware = db.wares;
 const Good = db.goods;
+const adminPush = require("../services/adminPush.service");
 
 
 exports.createRequest = async (req, res) => {
@@ -44,6 +45,12 @@ exports.createRequest = async (req, res) => {
         fields: ['type', 'stock', 'status', 'ware_id', 'good_id', 'merchant_id', 'name'] // Explicitly exclude approved_stock
       });
   
+      try {
+        await adminPush.notifyAdminsItemCreateRequest(newRequest, merchant_id);
+      } catch (pushErr) {
+        console.error("[FCM] admin item-request push failed:", pushErr.message);
+      }
+
       return res.status(201).json({
         success: true,
         message: "Request created successfully.",
@@ -83,7 +90,12 @@ exports.create = (req, res) => {
     Request.create(cat, {
       fields: ['ware_id', 'merchant_id', 'stock', 'status', 'name', 'type'] // Explicitly exclude approved_stock
     })
-    .then(data => {
+    .then(async (data) => {
+      try {
+        await adminPush.notifyAdminsItemCreateRequest(data, req.body.merchant_id);
+      } catch (pushErr) {
+        console.error("[FCM] admin item-request push failed:", pushErr.message);
+      }
       res.json({ success: true, data: data });
     })
     .catch(err => {

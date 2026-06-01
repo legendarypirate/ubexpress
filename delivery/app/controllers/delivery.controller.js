@@ -7,6 +7,7 @@ const Order = db.orders;
 const Good = db.goods;
 const DeliveryItem = db.delivery_items;
 const driverPush = require("../services/driverPush.service");
+const adminPush = require("../services/adminPush.service");
 const deliveryStock = require("../services/deliveryStock.service");
 
 
@@ -357,6 +358,12 @@ exports.create = async (req, res) => {
     }
 
     await t.commit();
+
+    try {
+      await adminPush.notifyAdminsNewDelivery(delivery, req.body.merchant_id);
+    } catch (pushErr) {
+      console.error("[FCM] admin new-delivery push failed:", pushErr.message);
+    }
 
     res.json({ success: true, data: delivery });
   } catch (err) {

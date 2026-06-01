@@ -11,6 +11,7 @@ const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
 const path = require('path');
 const deliveryStock = require("../services/deliveryStock.service");
+const merchantPush = require("../services/merchantPush.service");
 
 // Configure Cloudinary (you'll need to set these in environment variables)
 cloudinary.config({
@@ -486,6 +487,18 @@ exports.completeDelivery = async (req, res) => {
       );
 
       await t.commit();
+
+      if (statusInt === 3 || statusInt === 4) {
+        try {
+          await delivery.reload();
+          await merchantPush.notifyMerchantDeliveryStatusUpdated(
+            delivery,
+            statusInt
+          );
+        } catch (pushErr) {
+          console.error("[FCM] merchant delivery status push failed:", pushErr.message);
+        }
+      }
 
       res.send({
         success: true,

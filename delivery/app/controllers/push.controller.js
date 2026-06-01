@@ -79,8 +79,57 @@ exports.registerToken = async (req, res) => {
   }
 };
 
-/** POST /api/push/send — send push to users by ids and/or role_id */
+const ADMIN_ROLE_ID = parseInt(process.env.ADMIN_ROLE_ID || "1", 10);
+
+/** GET /api/push/audience — device counts with FCM tokens by role */
+exports.getAudienceStats = async (req, res) => {
+  const role = Number(req.user?.role);
+  if (role !== ADMIN_ROLE_ID) {
+    return res.status(403).json({
+      success: false,
+      message: "Only admins can view push audience stats",
+    });
+  }
+
+  try {
+    const roles = [
+      { role_id: 2, label: "merchant" },
+      { role_id: 3, label: "driver" },
+    ];
+
+    const stats = await Promise.all(
+      roles.map(async ({ role_id, label }) => {
+        const withToken = await User.count({
+          where: { role_id, fcm_token: { [Op.ne]: null } },
+        });
+        const total = await User.count({ where: { role_id } });
+        return { role_id, label, with_token: withToken, total };
+      })
+    );
+
+    const fcmReady = fcmService.initFirebaseAdmin();
+
+    res.json({
+      success: true,
+      firebase_ready: fcmReady,
+      audiences: stats,
+    });
+  } catch (err) {
+    console.error("[FCM] getAudienceStats error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+/** POST /api/push/send — send push to users by ids and/or role_id (admin only) */
 exports.sendPush = async (req, res) => {
+  const role = Number(req.user?.role);
+  if (role !== ADMIN_ROLE_ID) {
+    return res.status(403).json({
+      success: false,
+      message: "Only admins can send push notifications",
+    });
+  }
+
   const { title, body, user_ids, role_id, data } = req.body;
 
   if (!title || !body) {
@@ -94,6 +143,14 @@ exports.sendPush = async (req, res) => {
     return res.status(400).json({
       success: false,
       message: "Provide user_ids and/or role_id",
+    });
+  }
+
+  const targetRoleId = role_id != null ? Number(role_id) : null;
+  if (targetRoleId != null && targetRoleId !== 2 && targetRoleId !== 3) {
+    return res.status(400).json({
+      success: false,
+      message: "role_id must be 2 (merchant) or 3 (driver)",
     });
   }
 
