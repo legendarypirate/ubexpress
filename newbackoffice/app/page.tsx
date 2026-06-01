@@ -198,7 +198,7 @@ export default function LandingPage() {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <a href="#hero" className="flex items-center gap-2.5">
             <Image
-              src="/beelogo.jpg"
+              src="/bee.jpeg"
               alt="BeeDeliv"
               width={40}
               height={40}
@@ -279,7 +279,7 @@ export default function LandingPage() {
               <CardHeader className="space-y-3 pb-2 pt-8 text-center">
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-50 ring-1 ring-orange-100">
                   <Image
-                    src="/beelogo.jpg"
+                    src="/bee.jpeg"
                     alt="BeeDeliv"
                     width={48}
                     height={48}
@@ -441,7 +441,7 @@ export default function LandingPage() {
             <div className="flex justify-center">
               <div className="rounded-3xl bg-white/10 p-8 ring-1 ring-white/20">
                 <Image
-                  src="/beelogo.jpg"
+                  src="/bee.jpeg"
                   alt="BeeDeliv app"
                   width={200}
                   height={200}
@@ -459,7 +459,7 @@ export default function LandingPage() {
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <Image
-                src="/beelogo.jpg"
+                src="/bee.jpeg"
                 alt="BeeDeliv"
                 width={36}
                 height={36}

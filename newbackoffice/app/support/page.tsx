@@ -7,7 +7,7 @@ export default function SupportPage() {
           <div className="flex items-center justify-between h-20">
             <div className="flex items-center space-x-3">
               <img
-                src="/superlogo.png"
+                src="/bee.jpeg"
                 alt="Super deliv Logo"
                 className="h-12 w-auto object-contain"
               />

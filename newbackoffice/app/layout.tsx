@@ -14,9 +14,9 @@ export const metadata: Metadata = {
   description:
     "BeeDeliv нь дэлгүүр, жолооч болон хэрэглэгчийг нэгтгэсэн Улаанбаатарын хурдан, ил тод хүргэлтийн систем.",
   icons: {
-    icon: "/beelogo.jpg",
-    shortcut: "/beelogo.jpg",
-    apple: "/beelogo.jpg",
+    icon: "/bee.jpeg",
+    shortcut: "/bee.jpeg",
+    apple: "/bee.jpeg",
   },
 };
 
