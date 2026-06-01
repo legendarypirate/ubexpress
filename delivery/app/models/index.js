@@ -35,6 +35,7 @@ db.statuses = require("./status.model.js")(sequelize, Sequelize);
 db.orders = require("./order.model.js")(sequelize, Sequelize);
 db.regions = require("./region.model.js")(sequelize, Sequelize);
 db.notifications = require("./notification.model.js")(sequelize, Sequelize);
+db.user_notifications = require("./user_notification.model.js")(sequelize, Sequelize);
 db.logs = require("./log.model.js")(sequelize, Sequelize);
 db.summaries = require("./summary.model.js")(sequelize, Sequelize);
 db.permissions = require("./permission.model.js")(sequelize, Sequelize);
@@ -64,6 +65,16 @@ db.histories.belongsTo(db.statuses, {
 db.users.hasMany(db.histories, {
   foreignKey: 'driver_id',
   as: 'histories'
+});
+
+db.users.hasMany(db.user_notifications, {
+  foreignKey: 'user_id',
+  as: 'notifications',
+});
+
+db.user_notifications.belongsTo(db.users, {
+  foreignKey: 'user_id',
+  as: 'user',
 });
 
 // Status has many Histories (optional)

@@ -1,6 +1,7 @@
 const db = require("../models");
 const User = db.users;
 const fcmService = require("./fcm.service");
+const inbox = require("./notificationInbox.service");
 
 /** Status IDs that notify the merchant after driver completes delivery. */
 const MERCHANT_NOTIFY_STATUSES = new Set([3, 4]);
@@ -30,13 +31,6 @@ async function notifyMerchantDeliveryStatusUpdated(delivery, statusInt) {
       attributes: ["id", "fcm_token", "fcm_platform", "username"],
     });
 
-    if (!merchant?.fcm_token) {
-      console.warn(
-        `[FCM] Merchant ${merchantId} has no FCM token — delivery status push skipped`
-      );
-      return { sent: 0, skipped: true, reason: "no_token" };
-    }
-
     const code = delivery.delivery_id || String(delivery.id);
     const statusLabel = STATUS_LABELS[status] || `Төлөв ${status}`;
     const address = (delivery.address || "").trim();
@@ -62,18 +56,34 @@ async function notifyMerchantDeliveryStatusUpdated(delivery, statusInt) {
       body = body.slice(0, 250);
     }
 
+    const pushData = {
+      type: "delivery_status_updated",
+      delivery_id: String(delivery.id),
+      delivery_code: code,
+      merchant_id: String(merchantId),
+      status_id: String(status),
+      status_label: statusLabel,
+    };
+
+    await inbox.recordForUser(merchantId, {
+      title,
+      body,
+      type: pushData.type,
+      data: pushData,
+    });
+
+    if (!merchant?.fcm_token) {
+      console.warn(
+        `[FCM] Merchant ${merchantId} has no FCM token — push skipped (inbox saved)`
+      );
+      return { sent: 0, skipped: true, reason: "no_token", inbox: true };
+    }
+
     const result = await fcmService.sendToTokens(
       [merchant.fcm_token],
       title,
       body,
-      {
-        type: "delivery_status_updated",
-        delivery_id: String(delivery.id),
-        delivery_code: code,
-        merchant_id: String(merchantId),
-        status_id: String(status),
-        status_label: statusLabel,
-      }
+      pushData
     );
 
     if (result.invalidTokens?.length > 0) {

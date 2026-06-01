@@ -82,6 +82,7 @@ require("./app/routes/delivery.mobile.routes")(app);
 require("./app/routes/order.mobile.routes")(app);
 require("./app/routes/good.mobile.routes")(app);
 require("./app/routes/push.routes")(app);
+require("./app/routes/notification.mobile.routes")(app);
 
 // Add error handling for undefined routes
 app.all('*', (req, res) => {

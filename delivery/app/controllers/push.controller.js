@@ -3,6 +3,7 @@ const path = require("path");
 const db = require("../models");
 const User = db.users;
 const fcmService = require("../services/fcm.service");
+const inbox = require("../services/notificationInbox.service");
 const { Op } = db.Sequelize;
 
 const EXPECTED_FCM_KEY_PATH = path.join(
@@ -155,20 +156,33 @@ exports.sendPush = async (req, res) => {
   }
 
   try {
-    const where = { fcm_token: { [Op.ne]: null } };
+    const userWhere = {};
     if (user_ids?.length) {
-      where.id = user_ids;
+      userWhere.id = user_ids;
     }
     if (role_id != null) {
-      where.role_id = role_id;
+      userWhere.role_id = role_id;
     }
 
     const users = await User.findAll({
-      where,
-      attributes: ["id", "fcm_token", "fcm_platform"],
+      where: userWhere,
+      attributes: ["id", "fcm_token", "fcm_platform", "role_id"],
     });
 
-    const tokens = users.map((u) => u.fcm_token).filter(Boolean);
+    const broadcastData = {
+      ...(data || {}),
+      type: data?.type || "admin_broadcast",
+    };
+
+    await inbox.recordForUsers(users.map((u) => u.id), {
+      title,
+      body,
+      type: broadcastData.type,
+      data: broadcastData,
+    });
+
+    const usersWithTokens = users.filter((u) => u.fcm_token);
+    const tokens = usersWithTokens.map((u) => u.fcm_token).filter(Boolean);
 
     if (tokens.length === 0) {
       console.warn("[FCM] sendPush: no tokens for", { user_ids, role_id });
@@ -180,13 +194,18 @@ exports.sendPush = async (req, res) => {
       });
     }
 
-    users.forEach((u) => {
+    usersWithTokens.forEach((u) => {
       console.log(
         `[FCM] sendPush → user ${u.id} platform=${u.fcm_platform || "unknown"} token=${(u.fcm_token || "").slice(0, 12)}...`
       );
     });
 
-    const result = await fcmService.sendToTokens(tokens, title, body, data || {});
+    const result = await fcmService.sendToTokens(
+      tokens,
+      title,
+      body,
+      broadcastData
+    );
 
     console.log(
       `[FCM] sendPush result: sent=${result.successCount} failed=${result.failureCount} targets=${tokens.length}`
@@ -204,10 +223,11 @@ exports.sendPush = async (req, res) => {
       sent: result.successCount,
       failed: result.failureCount,
       targets: tokens.length,
-      platforms: users.map((u) => ({
+      platforms: usersWithTokens.map((u) => ({
         id: u.id,
         platform: u.fcm_platform,
       })),
+      inbox_saved: users.length,
     });
   } catch (err) {
     console.error("[FCM] sendPush error:", err);

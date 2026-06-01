@@ -1,6 +1,7 @@
 const db = require("../models");
 const User = db.users;
 const fcmService = require("./fcm.service");
+const inbox = require("./notificationInbox.service");
 
 /**
  * Notify a driver that deliveries were allocated to them (admin web/app).
@@ -16,11 +17,6 @@ async function notifyDriverDeliveryAllocated(driverId, deliveryIds) {
       attributes: ["id", "fcm_token", "username"],
     });
 
-    if (!driver?.fcm_token) {
-      console.warn(`[FCM] Driver ${driverId} has no FCM token — push skipped`);
-      return { sent: 0, skipped: true, reason: "no_token" };
-    }
-
     const count = deliveryIds.length;
     const title = "Шинэ хүргэлт";
     const body =
@@ -28,16 +24,29 @@ async function notifyDriverDeliveryAllocated(driverId, deliveryIds) {
         ? "Танд 1 хүргэлт хуваарилагдлаа"
         : `Танд ${count} хүргэлт хуваарилагдлаа`;
 
+    const pushData = {
+      type: "delivery_allocated",
+      driver_id: String(driverId),
+      delivery_ids: deliveryIds.map(String).join(","),
+      count: String(count),
+    };
+
+    await inbox.recordForUser(driverId, {
+      title,
+      body,
+      type: pushData.type,
+      data: pushData,
+    });
+
+    if (!driver?.fcm_token) {
+      return { sent: 0, skipped: true, reason: "no_token", inbox: true };
+    }
+
     const result = await fcmService.sendToTokens(
       [driver.fcm_token],
       title,
       body,
-      {
-        type: "delivery_allocated",
-        driver_id: String(driverId),
-        delivery_ids: deliveryIds.map(String).join(","),
-        count: String(count),
-      }
+      pushData
     );
 
     if (result.invalidTokens?.length > 0) {

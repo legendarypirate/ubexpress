@@ -2,6 +2,7 @@ const db = require("../models");
 const User = db.users;
 const Op = db.Sequelize.Op;
 const fcmService = require("./fcm.service");
+const inbox = require("./notificationInbox.service");
 
 /** Admin users (backoffice / admin Flutter app). */
 const ADMIN_ROLE_ID = parseInt(process.env.ADMIN_ROLE_ID || "1", 10);
@@ -16,16 +17,29 @@ async function getAdminsWithTokens() {
   });
 }
 
+async function getAllAdmins() {
+  return User.findAll({
+    where: { role_id: ADMIN_ROLE_ID },
+    attributes: ["id", "fcm_token", "fcm_platform", "username"],
+  });
+}
+
 /**
  * Send push to all admins with registered FCM tokens.
  * Does not throw — logs errors so API handlers still succeed.
  */
 async function notifyAdmins(title, body, data = {}) {
   try {
-    const admins = await getAdminsWithTokens();
+    const allAdmins = await getAllAdmins();
+    await inbox.recordForUsers(
+      allAdmins.map((a) => a.id),
+      { title, body, type: data.type || "admin_alert", data }
+    );
+
+    const admins = allAdmins.filter((a) => a.fcm_token);
     if (!admins.length) {
-      console.warn("[FCM] No admin devices with FCM tokens — push skipped");
-      return { sent: 0, skipped: true, reason: "no_tokens" };
+      console.warn("[FCM] No admin devices with FCM tokens — push skipped (inbox saved)");
+      return { sent: 0, skipped: true, reason: "no_tokens", inbox: true };
     }
 
     const tokens = admins.map((a) => a.fcm_token).filter(Boolean);
