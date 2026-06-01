@@ -92,7 +92,10 @@ async function sendToTokens(tokens, title, body, data = {}) {
     throw new Error("Firebase Admin is not configured on the server");
   }
 
-  const stringData = {};
+  const stringData = {
+    title: title == null ? "" : String(title),
+    body: body == null ? "" : String(body),
+  };
   Object.entries(data).forEach(([key, value]) => {
     stringData[key] = value == null ? "" : String(value);
   });
