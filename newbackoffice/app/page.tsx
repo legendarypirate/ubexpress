@@ -1,21 +1,86 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Image from "next/image";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import {
+  Truck,
+  Shield,
+  Clock,
+  MapPin,
+  Package,
+  BarChart3,
+  Smartphone,
+  ArrowRight,
+  Zap,
+} from "lucide-react";
 
 const APP_STORE_URL = "https://apps.apple.com/us/app/bee-deliv/id6759854417";
-const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.ub.express";
+const PLAY_STORE_URL =
+  "https://play.google.com/store/apps/details?id=com.ub.express";
+
+const REGIONS = [
+  "Төв дүүрэг",
+  "Хан-Уул дүүрэг",
+  "Баянгол дүүрэг",
+  "Сонгинохайрхан дүүрэг",
+  "Сүхбаатар дүүрэг",
+  "Чингэлтэй дүүрэг",
+  "Баянзүрх дүүрэг",
+  "Налайх дүүрэг",
+];
+
+const SERVICES = [
+  {
+    icon: Zap,
+    title: "Шуурхай хүргэлт",
+    description:
+      "Захиалгыг хотын аль ч цэгт хамгийн богино хугацаанд, аюулгүй хүргэнэ.",
+  },
+  {
+    icon: Shield,
+    title: "Итгэлтэй үйлчилгээ",
+    description:
+      "Бүртгэлтэй жолооч, тодорхой төлөв — захиалга бүр хяналттай.",
+  },
+  {
+    icon: Clock,
+    title: "24/7 систем",
+    description: "Админ самбар, тайлан, хүргэлтийн урсгал — бүх цагт.",
+  },
+  {
+    icon: Package,
+    title: "Олон төрлийн ачаа",
+    description: "Хоол, бараа, эмийн сан зэрэг олон төрлийн захиалга.",
+  },
+  {
+    icon: BarChart3,
+    title: "Бодит тайлан",
+    description: "Хүргэлт, тооцоо, барааны үлдэгдлийг нэг дороос харах.",
+  },
+  {
+    icon: MapPin,
+    title: "Бүх дүүрэг",
+    description: "Улаанбаатар хотын 8 дүүрэгт хүргэлтийн сүлжээ.",
+  },
+];
 
 export default function LandingPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState<"error" | "success" | "info">("info");
+  const [messageType, setMessageType] = useState<"error" | "success" | "info">(
+    "info"
+  );
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+
+  useEffect(() => {
+    document.title = "BeeDeliv — Улаанбаатарын хүргэлтийн платформ";
+  }, []);
 
   const handleLogin = async () => {
     setMessage("");
@@ -27,9 +92,6 @@ export default function LandingPage() {
 
     setLoading(true);
     try {
-      // Use API base from env (.env -> NEXT_PUBLIC_API_URL)
-      console.log('Making login request...'); // Debug log
-
       if (!API_URL) {
         setMessageType("error");
         setMessage("API URL тохируулаагүй байна (NEXT_PUBLIC_API_URL)");
@@ -39,27 +101,24 @@ export default function LandingPage() {
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify({ username, password }),
       });
 
-      console.log('Login response status:', response.status); // Debug log
-
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ message: 'Network error' }));
+        const errorData = await response
+          .json()
+          .catch(() => ({ message: "Network error" }));
         throw new Error(errorData.message || `HTTP ${response.status}`);
       }
 
       const data = await response.json();
-      console.log('Login response data:', data); // Debug log
 
-      if (!response.ok || !data.success) {
+      if (!data.success) {
         setMessageType("error");
         setMessage(data.message || "Нэвтрэхэд алдаа гарлаа");
       } else {
-        // Store all relevant info
-        // Note: Secure auth returns 'accessToken', not 'token'
-        const token = data.accessToken || data.token; // Support both formats
+        const token = data.accessToken || data.token;
         const user = data.user;
 
         if (!token || !user) {
@@ -69,30 +128,27 @@ export default function LandingPage() {
           return;
         }
 
-        // Try to use secure storage if available, otherwise use localStorage
         try {
-          const { setSecureItem } = await import('@/lib/security/secure-storage');
+          const { setSecureItem } = await import("@/lib/security/secure-storage");
           await setSecureItem("token", token);
           await setSecureItem("user", user);
           await setSecureItem("permissions", user.permissions || []);
           await setSecureItem("role", user.role?.toString() ?? "");
           await setSecureItem("username", user.username || "");
         } catch (e) {
-          console.warn('Secure storage not available, using localStorage:', e);
+          console.warn("Secure storage not available, using localStorage:", e);
         }
 
-        // Also set in regular localStorage for backward compatibility (will be migrated)
         localStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("permissions", JSON.stringify(user.permissions || []));
         localStorage.setItem("role", user.role?.toString() ?? "");
         localStorage.setItem("username", user.username || "");
 
-        // Set cookie for server-side middleware authentication (matches JWT lifetime)
         const expires = new Date();
         expires.setDate(expires.getDate() + 30);
-        const isSecure = window.location.protocol === 'https:';
-        document.cookie = `token=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Strict${isSecure ? '; Secure' : ''}`;
+        const isSecure = window.location.protocol === "https:";
+        document.cookie = `token=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Strict${isSecure ? "; Secure" : ""}`;
 
         setMessageType("success");
         setMessage("Амжилттай нэвтэрлээ");
@@ -111,364 +167,286 @@ export default function LandingPage() {
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleLogin();
-    }
+    if (e.key === "Enter") handleLogin();
   };
 
   const messageStyles = {
-    success: "text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800",
-    error: "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800",
-    info: "text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/30 border-slate-200 dark:border-slate-800",
+    success:
+      "text-emerald-700 bg-emerald-50 border-emerald-200",
+    error: "text-red-700 bg-red-50 border-red-200",
+    info: "text-slate-600 bg-slate-50 border-slate-200",
   }[messageType];
 
   const scrollToSection = (id: string) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const navLink =
+    "text-sm font-medium text-slate-600 hover:text-orange-600 transition-colors";
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-slate-50 to-orange-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="min-h-screen bg-[#faf9f7] text-slate-900">
+      {/* Background */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 h-[28rem] w-[28rem] rounded-full bg-orange-200/40 blur-3xl" />
+        <div className="absolute top-1/3 -left-32 h-80 w-80 rounded-full bg-amber-100/50 blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 h-96 w-96 rounded-full bg-orange-100/30 blur-3xl" />
+      </div>
+
       {/* Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/70 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            <div className="flex items-center space-x-3">
-              <img
-                src="/beelogo.jpg"
-                alt="BeeDeliv Logo"
-                className="h-12 w-auto object-contain"
-              />
-              <span className="text-2xl font-black tracking-tighter text-slate-900 dark:text-white uppercase italic">
-                BEE-<span className="text-orange-600">DELIV</span>
-              </span>
-            </div>
-            <div className="hidden md:flex items-center space-x-8">
-              <button
-                onClick={() => scrollToSection("hero")}
-                className="text-slate-700 dark:text-slate-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors font-semibold"
-              >
-                Нүүр
-              </button>
-              <button
-                onClick={() => scrollToSection("services")}
-                className="text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium"
-              >
-                Үйлчилгээ
-              </button>
-              <button
-                onClick={() => scrollToSection("regions")}
-                className="text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium"
-              >
-                Хүргэлтийн бүс
-              </button>
-              <button
-                onClick={() => scrollToSection("download")}
-                className="text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors font-medium"
-              >
-                Апп татах
-              </button>
-            </div>
-          </div>
+      <header className="sticky top-0 z-50 border-b border-orange-100/80 bg-white/80 backdrop-blur-lg">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
+          <a href="#hero" className="flex items-center gap-2.5">
+            <Image
+              src="/beelogo.jpg"
+              alt="BeeDeliv"
+              width={40}
+              height={40}
+              className="h-10 w-10 rounded-xl object-cover shadow-sm"
+            />
+            <span className="text-lg font-bold tracking-tight">
+              Bee<span className="text-orange-600">Deliv</span>
+            </span>
+          </a>
+          <nav className="hidden items-center gap-6 md:flex">
+            <button type="button" onClick={() => scrollToSection("hero")} className={navLink}>
+              Нүүр
+            </button>
+            <button type="button" onClick={() => scrollToSection("services")} className={navLink}>
+              Үйлчилгээ
+            </button>
+            <button type="button" onClick={() => scrollToSection("regions")} className={navLink}>
+              Бүс нутаг
+            </button>
+            <button type="button" onClick={() => scrollToSection("download")} className={navLink}>
+              Апп
+            </button>
+          </nav>
+          <Button
+            size="sm"
+            className="rounded-full bg-orange-600 hover:bg-orange-700 font-semibold shadow-md shadow-orange-600/20"
+            onClick={() => scrollToSection("login")}
+          >
+            Нэвтрэх
+          </Button>
         </div>
-      </nav>
+      </header>
 
-      {/* Hero Section with Login */}
-      <section id="hero" className="pt-32 pb-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
-              <div className="space-y-4">
-                <h1 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white leading-tight uppercase italic tracking-tighter">
-                  УЛААНБААТАРЫН <br />
-                  <span className="text-orange-600">БОДИТ</span> ХҮРГЭЛТ
-                </h1>
-                <p className="text-xl text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl">
-                  BEE-DELIV нь таны цаг хугацааг хэмнэж, ачаа тээшийг хамгийн хурдан, найдвартай хүргэх хотын шилдэг шийдэл юм.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-4">
-                <div className="flex items-center space-x-2 bg-white dark:bg-slate-800 px-4 py-2 rounded-full shadow-sm border border-slate-100 dark:border-slate-700">
-                  <div className="w-2 h-2 bg-orange-600 rounded-full animate-pulse"></div>
-                  <span className="text-sm font-bold text-slate-700 dark:text-slate-300">ШУУРХАЙ</span>
-                </div>
-                <div className="flex items-center space-x-2 bg-white dark:bg-slate-800 px-4 py-2 rounded-full shadow-sm border border-slate-100 dark:border-slate-700">
-                  <div className="w-2 h-2 bg-slate-900 dark:bg-white rounded-full"></div>
-                  <span className="text-sm font-bold text-slate-700 dark:text-slate-300">ИТГЭЛТЭЙ</span>
-                </div>
-                <div className="flex items-center space-x-2 bg-white dark:bg-slate-800 px-4 py-2 rounded-full shadow-sm border border-slate-100 dark:border-slate-700">
-                  <div className="w-2 h-2 bg-orange-600 rounded-full"></div>
-                  <span className="text-sm font-bold text-slate-700 dark:text-slate-300">24/7 СИСТЕМ</span>
-                </div>
-              </div>
+      {/* Hero */}
+      <section id="hero" className="relative px-4 pb-16 pt-12 sm:px-6 sm:pt-16 lg:pb-24">
+        <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2 lg:gap-16">
+          <div className="space-y-8">
+            <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-sm font-medium text-orange-800">
+              <Truck className="h-4 w-4" />
+              Улаанбаатарын хүргэлтийн платформ
             </div>
+            <div className="space-y-4">
+              <h1 className="text-4xl font-extrabold leading-[1.15] tracking-tight text-slate-900 sm:text-5xl lg:text-[3.25rem]">
+                Хүргэлтээ{" "}
+                <span className="text-orange-600">хурдан</span>,{" "}
+                удирдлагаа{" "}
+                <span className="text-orange-600">тодорхой</span>
+              </h1>
+              <p className="max-w-lg text-lg leading-relaxed text-slate-600">
+                BeeDeliv нь дэлгүүр, жолооч, админыг нэг системд холбож,
+                захиалга хүлээн авах, хуваарилах, тайлан гаргах ажлыг
+                хялбар болгоно.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {["Шуурхай", "Ил тод", "Нэгдсэн систем"].map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200/80"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              className="rounded-full border-slate-300 font-semibold"
+              onClick={() => scrollToSection("download")}
+            >
+              Апп татах
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
 
-            {/* Login Card */}
-            <div className="flex justify-center lg:justify-end">
-              <Card className="w-full max-w-md shadow-[0_20px_50px_rgba(234,88,12,0.1)] rounded-[2rem] border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md transition-all duration-500 hover:shadow-[0_20px_50px_rgba(234,88,12,0.2)]">
-                <CardHeader className="space-y-4 pb-6 pt-10">
-                  <div className="w-full flex justify-center">
-                    <div className="relative group">
-                      <div className="absolute inset-0 bg-orange-600 rounded-full blur-2xl opacity-10 group-hover:opacity-20 transition-opacity animate-pulse"></div>
-                      <img
-                        src="/beelogo.jpg"
-                        alt="BeeDeliv Logo"
-                        className="w-40 h-auto object-contain relative z-10 transition-transform duration-500 group-hover:scale-110"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1 text-center pt-4">
-                    <h2 className="text-3xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter">
-                      НЭВТРЭХ
-                    </h2>
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Админ хандалт</p>
-                  </div>
-                </CardHeader>
+          {/* Login */}
+          <div id="login" className="flex justify-center lg:justify-end">
+            <Card className="w-full max-w-md border-0 shadow-xl shadow-orange-900/5 ring-1 ring-slate-200/80 rounded-3xl bg-white">
+              <CardHeader className="space-y-3 pb-2 pt-8 text-center">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-50 ring-1 ring-orange-100">
+                  <Image
+                    src="/beelogo.jpg"
+                    alt="BeeDeliv"
+                    width={48}
+                    height={48}
+                    className="h-12 w-12 rounded-xl object-cover"
+                  />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900">Нэвтрэх</h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Админ удирдлагын самбар
+                  </p>
+                </div>
+              </CardHeader>
 
-                <CardContent className="space-y-5 px-6">
-                  <div className="flex flex-col space-y-2.5">
-                    <Label htmlFor="username" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                      Хэрэглэгчийн нэр
-                    </Label>
-                    <Input
-                      id="username"
-                      type="text"
-                      placeholder="Нэвтрэх нэр"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      className="h-14 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:border-orange-600 dark:focus:border-orange-500 focus:ring-0 transition-all duration-300 text-base"
-                      disabled={loading}
-                    />
-                  </div>
-
-                  <div className="flex flex-col space-y-2.5">
-                    <Label htmlFor="password" className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                      Нууц үг
-                    </Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      className="h-14 rounded-2xl border-2 border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 focus:border-orange-600 dark:focus:border-orange-500 focus:ring-0 transition-all duration-300 text-base"
-                      disabled={loading}
-                    />
-                  </div>
-
-                  {message && (
-                    <div className={`rounded-2xl border p-4 text-sm font-bold transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 ${messageStyles}`}>
-                      {message}
-                    </div>
-                  )}
-                </CardContent>
-
-                <CardFooter className="flex flex-col space-y-6 px-8 pb-10 pt-4">
-                  <Button
-                    className="w-full h-14 rounded-2xl text-base font-black uppercase italic tracking-wider bg-orange-600 hover:bg-orange-700 text-white shadow-[0_10px_20px_rgba(234,88,12,0.3)] hover:shadow-[0_10px_20px_rgba(234,88,12,0.5)] transition-all duration-300 transform hover:-translate-y-1 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                    onClick={handleLogin}
+              <CardContent className="space-y-4 px-6 pb-2">
+                <div className="space-y-2">
+                  <Label htmlFor="username" className="font-semibold text-slate-700">
+                    Хэрэглэгчийн нэр
+                  </Label>
+                  <Input
+                    id="username"
+                    type="text"
+                    placeholder="Нэвтрэх нэр"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    className="h-12 rounded-xl border-slate-200 bg-slate-50/80 focus-visible:ring-orange-500"
                     disabled={loading}
-                  >
-                    {loading ? (
-                      <span className="flex items-center gap-2">
-                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        УНШИЖ БАЙНА...
-                      </span>
-                    ) : (
-                      "НЭВТРЭХ"
-                    )}
-                  </Button>
-                </CardFooter>
-              </Card>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Our Services Section */}
-      <section id="services" className="py-20 px-4 sm:px-6 lg:px-8 bg-white/50 dark:bg-slate-900/50">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent mb-4">
-              Манай Үйлчилгээнүүд
-            </h2>
-            <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Бид танд олон төрлийн хүргэлтийн үйлчилгээг санал болгож байна
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="p-8 border-2 border-slate-100 dark:border-slate-800 hover:border-orange-600 dark:hover:border-orange-500 transition-all duration-500 hover:shadow-2xl bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm group">
-              <div className="w-16 h-16 bg-slate-900 dark:bg-orange-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-3 uppercase italic tracking-tighter">ШУУРХАЙ ХҮРГЭЛТ</h3>
-              <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
-                Бид таны захиалгыг хотын хаана ч байсан хамгийн богино хугацаанд, аюулгүй хүргэж өгнө.
-              </p>
-            </Card>
-
-            <Card className="p-8 border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-400 transition-all duration-300 hover:shadow-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
-              <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">Найдвартай үйлчилгээ</h3>
-              <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                Бидний бүх хүргэлт найдвартай, аюулгүй байхыг хангадаг. Таны захиалга найдвартай хүргэгчдийн гарт байна.
-              </p>
-            </Card>
-
-            <Card className="p-8 border-2 border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 hover:shadow-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">24/7 Дэмжлэг</h3>
-              <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                Бид 24 цаг, 7 хоног танд үйлчлэхэд бэлэн байна. Асуудал гарвал манай дэмжлэгийн баг танд туслах болно.
-              </p>
-            </Card>
-
-            <Card className="p-8 border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-400 transition-all duration-300 hover:shadow-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
-              <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">Олон төрлийн бараа</h3>
-              <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                Хоол, ундаа, эмийн сан, гэрийн тэжээвэр амьтан, гэх мэт олон төрлийн бараа захиалж болно.
-              </p>
-            </Card>
-
-            <Card className="p-8 border-2 border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 hover:shadow-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">Бодит мэдээлэл</h3>
-              <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                Та захиалгын байдлыг бодит цаг хугацаанд хянах боломжтой. Хүргэгч хаана байгааг мэдэх боломжтой.
-              </p>
-            </Card>
-
-            <Card className="p-8 border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-400 transition-all duration-300 hover:shadow-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm">
-              <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-blue-600 rounded-2xl flex items-center justify-center mb-6">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-3">Хямд үнэ</h3>
-              <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                Бид хамгийн хямд үнээр үйлчилгээ үзүүлдэг. Тогтмол үйлчлүүлэгчдэд онцгой хөнгөлөлт үзүүлдэг.
-              </p>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Delivery Regions Section */}
-      <section id="regions" className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-900 dark:to-slate-800">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300 bg-clip-text text-transparent mb-4">
-              Хүргэлтийн Бүс
-            </h2>
-            <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Бид хот доторх бүх бүс нутагт хүргэлт хийж байна
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              "Төв дүүрэг",
-              "Хан-Уул дүүрэг",
-              "Баянгол дүүрэг",
-              "Сонгинохайрхан дүүрэг",
-              "Сүхбаатар дүүрэг",
-              "Чингэлтэй дүүрэг",
-              "Баянзүрх дүүрэг",
-              "Налайх дүүрэг",
-            ].map((region, index) => (
-              <Card
-                key={index}
-                className="p-6 border-2 border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-400 transition-all duration-300 hover:shadow-xl bg-white/90 dark:bg-slate-800/90 backdrop-blur-sm text-center"
-              >
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
+                  />
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{region}</h3>
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="font-semibold text-slate-700">
+                    Нууц үг
+                  </Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={handleKeyPress}
+                    className="h-12 rounded-xl border-slate-200 bg-slate-50/80 focus-visible:ring-orange-500"
+                    disabled={loading}
+                  />
+                </div>
+                {message && (
+                  <div
+                    className={`rounded-xl border px-4 py-3 text-sm font-medium ${messageStyles}`}
+                  >
+                    {message}
+                  </div>
+                )}
+              </CardContent>
+
+              <CardFooter className="px-6 pb-8 pt-2">
+                <Button
+                  className="h-12 w-full rounded-xl bg-orange-600 text-base font-bold hover:bg-orange-700 shadow-lg shadow-orange-600/25"
+                  onClick={handleLogin}
+                  disabled={loading}
+                >
+                  {loading ? "Уншиж байна..." : "Нэвтрэх"}
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Services */}
+      <section id="services" className="relative border-t border-slate-200/80 bg-white px-4 py-20 sm:px-6">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-14 text-center">
+            <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">
+              Яагаад BeeDeliv вэ?
+            </h2>
+            <p className="mx-auto mt-3 max-w-2xl text-lg text-slate-600">
+              Хүргэлтийн бүх үе шатыг нэг платформоор удирдах боломж
+            </p>
+          </div>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {SERVICES.map(({ icon: Icon, title, description }) => (
+              <Card
+                key={title}
+                className="group border-slate-200/80 p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:border-orange-200 hover:shadow-md rounded-2xl"
+              >
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100 text-orange-600 transition-colors group-hover:bg-orange-600 group-hover:text-white">
+                  <Icon className="h-6 w-6" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-900">{title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600">
+                  {description}
+                </p>
               </Card>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Download App Section */}
-      <section id="download" className="py-20 px-4 sm:px-6 lg:px-8 bg-white/50 dark:bg-slate-900/50">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
-              <h2 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white uppercase italic tracking-tighter">
-                АПП ТАТАЖ <span className="text-orange-600">АВААРАЙ</span>
+      {/* Regions */}
+      <section
+        id="regions"
+        className="relative px-4 py-20 sm:px-6 bg-gradient-to-b from-orange-50/80 to-[#faf9f7]"
+      >
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-12 text-center">
+            <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">
+              Хүргэлтийн бүс
+            </h2>
+            <p className="mt-3 text-lg text-slate-600">
+              Улаанбаатар хотын 8 дүүрэгт үйлчилж байна
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {REGIONS.map((region) => (
+              <div
+                key={region}
+                className="flex items-center justify-center gap-2 rounded-2xl bg-white px-4 py-4 text-center text-sm font-semibold text-slate-800 shadow-sm ring-1 ring-slate-200/80"
+              >
+                <MapPin className="h-4 w-4 shrink-0 text-orange-500" />
+                {region}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Download */}
+      <section id="download" className="relative px-4 py-20 sm:px-6">
+        <div className="mx-auto max-w-6xl overflow-hidden rounded-3xl bg-slate-900 px-8 py-12 text-white sm:px-12 lg:py-16">
+          <div className="grid items-center gap-10 lg:grid-cols-2">
+            <div className="space-y-6">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-sm font-medium">
+                <Smartphone className="h-4 w-4" />
+                Гар утасны апп
+              </div>
+              <h2 className="text-3xl font-bold sm:text-4xl">
+                BeeDeliv аппыг татаж аваарай
               </h2>
-              <p className="text-xl text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
-                BEE-DELIV апп-ыг ашиглан хүргэлтээ бодит хугацаанд хянаж, захиалгаа хялбар удирдаарай.
+              <p className="text-lg text-slate-300 leading-relaxed">
+                Захиалга өгөх, хүргэлт хянах, жолоочийн ажлыг удирдах —
+                бүгдийг гар утсаараа.
               </p>
-              <div className="flex flex-wrap gap-4">
+              <div className="flex flex-wrap gap-3">
                 <Button
-                  className="h-16 px-8 bg-slate-900 hover:bg-black text-white rounded-2xl shadow-xl transition-all duration-300 group"
+                  className="h-12 rounded-xl bg-white text-slate-900 hover:bg-slate-100 font-semibold"
                   onClick={() => window.open(APP_STORE_URL, "_blank")}
                 >
-                  <div className="flex items-center space-x-3">
-                    <svg className="w-8 h-8 fill-orange-600 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
-                      <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-                    </svg>
-                    <div className="text-left">
-                      <div className="text-[10px] font-bold uppercase opacity-60">App Store</div>
-                      <div className="text-base font-black">ТАТАЖ АВАХ</div>
-                    </div>
-                  </div>
+                  App Store
                 </Button>
                 <Button
-                  className="h-16 px-8 bg-white border-2 border-slate-900 hover:bg-slate-50 text-slate-900 rounded-2xl shadow-xl transition-all duration-300 group"
+                  variant="outline"
+                  className="h-12 rounded-xl border-white/30 bg-transparent text-white hover:bg-white/10 font-semibold"
                   onClick={() => window.open(PLAY_STORE_URL, "_blank")}
                 >
-                  <div className="flex items-center space-x-3">
-                    <svg className="w-8 h-8 fill-orange-600 transition-transform group-hover:scale-110" viewBox="0 0 24 24">
-                      <path d="M3,20.5V3.5C3,2.91 3.34,2.39 3.84,2.15L13.69,12L3.84,21.85C3.34,21.6 3,21.09 3,20.5M16.81,15.12L6.05,21.34L14.54,12.85L16.81,15.12M20.16,10.81C20.5,11.08 20.75,11.5 20.75,12C20.75,12.5 20.53,12.9 20.18,13.18L17.89,14.5L15.39,12L17.89,9.5L20.16,10.81M6.05,2.66L16.81,8.88L14.54,11.15L6.05,2.66Z" />
-                    </svg>
-                    <div className="text-left">
-                      <div className="text-[10px] font-bold uppercase opacity-60">Google Play</div>
-                      <div className="text-base font-black">ТАТАЖ АВАХ</div>
-                    </div>
-                  </div>
+                  Google Play
                 </Button>
               </div>
             </div>
-            <div className="flex justify-center lg:justify-end">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-3xl blur-2xl opacity-20 animate-pulse"></div>
-                <div className="relative bg-gradient-to-br from-blue-100 to-indigo-100 dark:from-slate-800 dark:to-slate-700 rounded-3xl p-8 shadow-2xl">
-                  <img
-                    src="/beelogo.jpg"
-                    alt="BeeDeliv App"
-                    className="w-64 h-auto object-contain mx-auto"
-                  />
-                </div>
+            <div className="flex justify-center">
+              <div className="rounded-3xl bg-white/10 p-8 ring-1 ring-white/20">
+                <Image
+                  src="/beelogo.jpg"
+                  alt="BeeDeliv app"
+                  width={200}
+                  height={200}
+                  className="mx-auto h-48 w-48 rounded-2xl object-cover shadow-2xl"
+                />
               </div>
             </div>
           </div>
@@ -476,114 +454,59 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-slate-900 dark:bg-slate-950 text-slate-300 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-8 mb-8">
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <img
-                  src="/beelogo.jpg"
-                  alt="BeeDeliv Logo"
-                  className="h-12 w-auto object-contain bg-white rounded-lg p-1"
-                />
-                <span className="text-2xl font-black text-white uppercase italic tracking-tighter">
-                  BEE-<span className="text-orange-600">DELIV</span>
-                </span>
-              </div>
-              <p className="text-slate-400 text-sm leading-relaxed font-medium">
-                Улаанбаатар хотын хамгийн шуурхай, найдвартай ачаа хүргэлтийн нэгдсэн систем.
-              </p>
+      <footer className="border-t border-slate-200 bg-white px-4 py-12 sm:px-6">
+        <div className="mx-auto flex max-w-6xl flex-col gap-8 md:flex-row md:items-start md:justify-between">
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Image
+                src="/beelogo.jpg"
+                alt="BeeDeliv"
+                width={36}
+                height={36}
+                className="h-9 w-9 rounded-lg object-cover"
+              />
+              <span className="text-lg font-bold">
+                Bee<span className="text-orange-600">Deliv</span>
+              </span>
             </div>
-
+            <p className="max-w-xs text-sm text-slate-600 leading-relaxed">
+              Улаанбаатарын хурдан, ил тод хүргэлтийн нэгдсэн систем.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 text-sm">
             <div>
-              <h4 className="text-white font-semibold mb-4">Холбоос</h4>
-              <ul className="space-y-2">
+              <p className="font-bold text-slate-900 mb-3">Цэс</p>
+              <ul className="space-y-2 text-slate-600">
                 <li>
-                  <button
-                    onClick={() => scrollToSection("hero")}
-                    className="text-slate-400 hover:text-white transition-colors text-sm"
-                  >
+                  <button type="button" onClick={() => scrollToSection("hero")} className="hover:text-orange-600">
                     Нүүр
                   </button>
                 </li>
                 <li>
-                  <button
-                    onClick={() => scrollToSection("services")}
-                    className="text-slate-400 hover:text-white transition-colors text-sm"
-                  >
+                  <button type="button" onClick={() => scrollToSection("services")} className="hover:text-orange-600">
                     Үйлчилгээ
                   </button>
                 </li>
                 <li>
-                  <button
-                    onClick={() => scrollToSection("regions")}
-                    className="text-slate-400 hover:text-white transition-colors text-sm"
-                  >
-                    Хүргэлтийн бүс
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => scrollToSection("download")}
-                    className="text-slate-400 hover:text-white transition-colors text-sm"
-                  >
+                  <button type="button" onClick={() => scrollToSection("download")} className="hover:text-orange-600">
                     Апп татах
                   </button>
                 </li>
               </ul>
             </div>
-
             <div>
-              <h4 className="text-white font-semibold mb-4">Холбоо барих</h4>
-              <ul className="space-y-2 text-sm text-slate-400">
-                <li className="flex items-center space-x-2">
-                  <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                  <span>99633844</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                  <span>info@beedeliv.mn</span>
-                </li>
-                <li className="flex items-center space-x-2">
-                  <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  <span>Улаанбаатар хот</span>
-                </li>
+              <p className="font-bold text-slate-900 mb-3">Холбоо барих</p>
+              <ul className="space-y-2 text-slate-600">
+                <li>99633844</li>
+                <li>info@beedeliv.mn</li>
+                <li>Улаанбаатар хот</li>
               </ul>
             </div>
-
-            <div>
-              <h4 className="text-white font-semibold mb-4">Биднийг дагах</h4>
-              <div className="flex space-x-4">
-                <a href="#" className="text-slate-400 hover:text-white transition-colors">
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-                  </svg>
-                </a>
-                <a href="#" className="text-slate-400 hover:text-white transition-colors">
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
-                  </svg>
-                </a>
-                <a href="#" className="text-slate-400 hover:text-white transition-colors">
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                  </svg>
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-slate-800 pt-8 text-center text-sm text-slate-400">
-            <p>&copy; {new Date().getFullYear()} BEE-DELIV. Бүх эрх хуулиар хамгаалагдсан.</p>
           </div>
         </div>
+        <p className="mx-auto mt-10 max-w-6xl border-t border-slate-100 pt-8 text-center text-sm text-slate-500">
+          © {new Date().getFullYear()} BeeDeliv. Бүх эрх хуулиар хамгаалагдсан.
+        </p>
       </footer>
     </div>
   );
