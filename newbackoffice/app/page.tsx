@@ -88,11 +88,9 @@ export default function LandingPage() {
         localStorage.setItem("role", user.role?.toString() ?? "");
         localStorage.setItem("username", user.username || "");
 
-        // Set cookie for server-side middleware authentication
-        // Cookie expires in 30 minutes (same as JWT token)
-        // Using Secure and SameSite=Strict for better security (adjust based on your deployment)
+        // Set cookie for server-side middleware authentication (matches JWT lifetime)
         const expires = new Date();
-        expires.setMinutes(expires.getMinutes() + 30);
+        expires.setDate(expires.getDate() + 30);
         const isSecure = window.location.protocol === 'https:';
         document.cookie = `token=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Strict${isSecure ? '; Secure' : ''}`;
 

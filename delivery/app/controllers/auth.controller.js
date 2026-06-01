@@ -3,7 +3,8 @@ const bcrypt = require("bcryptjs"); // Using bcryptjs for hashing and comparing 
 const db = require("../models");
 const { Op } = require("sequelize");
 const User = db.users;  // Assuming your users table is named 'users'
-const secretKey = 'your_secret_key';  // You can store this key in .env for better security
+const secretKey = process.env.JWT_SECRET || "your_secret_key";
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "30d";
 const axios = require("axios");
 const getPermissionsForRole = db.role_permissions;  // Assuming your users table is named 'users'
 
@@ -33,7 +34,7 @@ exports.register = async (req, res) => {
     });
 
     // Generate JWT token
-    const token = jwt.sign({ id: newUser.id, username: newUser.username, role: newUser.role }, secretKey, { expiresIn: "30m" });
+    const token = jwt.sign({ id: newUser.id, username: newUser.username, role: newUser.role }, secretKey, { expiresIn: JWT_EXPIRES_IN });
 
     res.status(201).json({
       success: true,
@@ -103,7 +104,7 @@ exports.login = async (req, res) => {
       permissions,
     };
 
-    const token = jwt.sign(tokenPayload, secretKey, { expiresIn: "30m" });
+    const token = jwt.sign(tokenPayload, secretKey, { expiresIn: JWT_EXPIRES_IN });
 
     const { fcm_token, platform } = req.body;
     if (fcm_token) {
@@ -150,7 +151,7 @@ exports.mobile_login = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials!" });
     }
 
-    const token = jwt.sign({ id: user.id, phone: user.phone, role: user.role }, secretKey, { expiresIn: "30m" });
+    const token = jwt.sign({ id: user.id, phone: user.phone, role: user.role }, secretKey, { expiresIn: JWT_EXPIRES_IN });
 
     const { fcm_token, platform } = req.body;
     if (fcm_token) {
@@ -246,7 +247,7 @@ exports.mobile_register = async (req, res) => {
     const token = jwt.sign(
       { id: newUser.id, username: newUser.username, phone: newUser.phone },
       secretKey,
-      { expiresIn: "30m" }
+      { expiresIn: JWT_EXPIRES_IN }
     );
 
     // Send OTP via SMS

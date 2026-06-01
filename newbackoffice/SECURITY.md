@@ -154,7 +154,7 @@ To test the security implementation:
 
 ### JWT Validation Errors
 - Ensure `JWT_SECRET` matches backend secret
-- Check token expiration (30 minutes)
+- Check token expiration (`JWT_EXPIRES_IN`, default 30 days)
 - Verify cookie is being set correctly
 
 ### API Route Errors
