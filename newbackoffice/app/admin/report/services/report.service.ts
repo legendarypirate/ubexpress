@@ -177,6 +177,25 @@ export interface ProductReportResponse {
   uniqueDeliveryTotal: number; // Sum of unique delivery prices
 }
 
+// Merchants with email (plain API — same as admin/user)
+export const fetchMerchantsForReport = async (): Promise<
+  Array<{ id: number; username: string; email?: string | null }>
+> => {
+  if (!API_URL) {
+    throw new Error('API URL is not configured. Please set NEXT_PUBLIC_API_URL environment variable.');
+  }
+
+  const response = await fetch(`${API_URL}/api/user/merchant`, {
+    headers: getAuthHeaders(),
+  });
+
+  const result = await response.json();
+  if (response.ok && result.success) {
+    return result.data || [];
+  }
+  throw new Error(result.message || 'Failed to fetch merchants');
+};
+
 // Send merchant report emails to selected merchants
 export const sendMerchantReportEmails = async (
   reports: MerchantReportEmailPayload[]

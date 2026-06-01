@@ -31,6 +31,7 @@ export interface DeliveryHistory {
 
 export interface Delivery {
   id: number;
+  merchant_id?: number;
   phone: string;
   address: string;
   status: number | string;

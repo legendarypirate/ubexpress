@@ -27,10 +27,11 @@ import { Mail } from 'lucide-react';
 import {
   fetchReportDeliveries,
   fetchReportOrders,
+  fetchMerchantsForReport,
   sendMerchantReportEmails,
   Order,
 } from './services/report.service';
-import { fetchDrivers, fetchMerchants } from '../delivery/services/delivery.service';
+import { fetchDrivers } from '../delivery/services/delivery.service';
 import { Delivery, User } from '../delivery/types/delivery';
 import { ReportRow, ReportType } from './types/report';
 
@@ -86,7 +87,7 @@ export default function ReportPage() {
       try {
         const [driversData, merchantsData] = await Promise.all([
           fetchDrivers().catch(() => []),
-          fetchMerchants().catch(() => []),
+          fetchMerchantsForReport().catch(() => []),
         ]);
         setDrivers(driversData);
         setMerchants(merchantsData);
@@ -112,11 +113,21 @@ export default function ReportPage() {
     setSelectedMerchantIds([]);
   }, [reportType]);
 
-  const resolveMerchantMeta = (merchantName: string) => {
-    const merchant = merchants.find((m) => m.username === merchantName);
+  const resolveMerchantMeta = (
+    groupKey: string,
+    sample?: { merchant_id?: number; merchant?: { username?: string } }
+  ) => {
+    const idFromDelivery = sample?.merchant_id;
+    const merchant =
+      (idFromDelivery != null
+        ? merchants.find((m) => m.id === idFromDelivery)
+        : undefined) ??
+      merchants.find((m) => m.username === groupKey) ??
+      merchants.find((m) => String(m.id) === groupKey);
+
     return {
-      merchantId: merchant?.id,
-      email: merchant?.email,
+      merchantId: merchant?.id ?? idFromDelivery,
+      email: merchant?.email ?? '',
     };
   };
 
@@ -305,7 +316,9 @@ export default function ReportPage() {
           return {
             dateRange: `${startDate} ~ ${endDate}`,
             name,
-            ...(typeToUse !== 'driver' ? resolveMerchantMeta(name) : {}),
+            ...(typeToUse !== 'driver'
+              ? resolveMerchantMeta(id, groupDeliveries[0])
+              : {}),
             deliveredDeliveries: deliveredCount,
             totalDeliveries: deliveredCount + status5Count, // Sum of delivered + status5
             totalPrice,
@@ -352,7 +365,9 @@ export default function ReportPage() {
           reportRows.push({
             dateRange: `${startDate} ~ ${endDate}`,
             name,
-            ...(typeToUse !== 'driver' ? resolveMerchantMeta(name) : {}),
+            ...(typeToUse !== 'driver'
+              ? resolveMerchantMeta(id, status5GroupDeliveries[0])
+              : {}),
             deliveredDeliveries: 0,
             totalDeliveries: status5Count, // Sum of delivered (0) + status5
             totalPrice: 0,
@@ -383,7 +398,9 @@ export default function ReportPage() {
           reportRows.push({
             dateRange: `${startDate} ~ ${endDate}`,
             name,
-            ...(typeToUse !== 'driver' ? resolveMerchantMeta(name) : {}),
+            ...(typeToUse !== 'driver'
+              ? resolveMerchantMeta(id, groupOrders[0])
+              : {}),
             deliveredDeliveries: 0,
             totalDeliveries: 0,
             totalPrice: 0,
@@ -425,8 +442,10 @@ export default function ReportPage() {
         // Group by driver username, or 'No Driver' if null
         key = delivery.driver?.username || 'No Driver';
       } else {
-        // Group by merchant username (for 'now', 'later', and 'merchant')
-        key = delivery.merchant?.username || 'Unknown Merchant';
+        key =
+          delivery.merchant_id != null
+            ? String(delivery.merchant_id)
+            : delivery.merchant?.username || 'Unknown Merchant';
       }
 
       if (!grouped[key]) {
@@ -456,8 +475,10 @@ export default function ReportPage() {
         // Group by driver username, or 'No Driver' if null
         key = order.driver?.username || 'No Driver';
       } else {
-        // Group by merchant username (for 'now', 'later', and 'merchant')
-        key = order.merchant?.username || 'Unknown Merchant';
+        key =
+          order.merchant_id != null
+            ? String(order.merchant_id)
+            : order.merchant?.username || 'Unknown Merchant';
       }
 
       if (!grouped[key]) {
@@ -793,6 +814,7 @@ export default function ReportPage() {
                   {(isCustomer ? 'now' : reportType) === 'driver' ? 'Жолооч' : 'Дэлгүүр'}
                 </TableHead>
               )}
+              {isMerchantReportView && <TableHead>Имэйл</TableHead>}
               <TableHead>Нийт хүргэлт</TableHead>
               <TableHead>Хүргэсэн хүргэлт</TableHead>
               <TableHead>Хаягаар очсон</TableHead>
@@ -806,7 +828,7 @@ export default function ReportPage() {
             {loading ? (
               <TableRow>
                 <TableCell
-                  colSpan={isCustomer ? 8 : isMerchantReportView ? 10 : 9}
+                  colSpan={isCustomer ? 8 : isMerchantReportView ? 11 : 9}
                   className="text-center py-8"
                 >
                   Loading...
@@ -815,7 +837,7 @@ export default function ReportPage() {
             ) : reportData.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={isCustomer ? 8 : isMerchantReportView ? 10 : 9}
+                  colSpan={isCustomer ? 8 : isMerchantReportView ? 11 : 9}
                   className="text-center py-8 text-gray-500"
                 >
                   No data available for the selected filters
@@ -845,14 +867,10 @@ export default function ReportPage() {
                     )}
                     <TableCell>{row.dateRange}</TableCell>
                     {!isCustomer && (
-                      <TableCell className="font-medium">
-                        <div>{row.name}</div>
-                        {isMerchantReportView && (
-                          <div className="text-xs text-gray-500 font-normal">
-                            {row.email || 'Имэйл байхгүй'}
-                          </div>
-                        )}
-                      </TableCell>
+                      <TableCell className="font-medium">{row.name}</TableCell>
+                    )}
+                    {isMerchantReportView && (
+                      <TableCell className="text-sm">{row.email}</TableCell>
                     )}
                     <TableCell>{row.totalDeliveries}</TableCell>
                     <TableCell>{row.deliveredDeliveries}</TableCell>
@@ -872,6 +890,7 @@ export default function ReportPage() {
                   {isMerchantReportView && <TableCell />}
                   <TableCell className="font-bold">Нийт</TableCell>
                   {!isCustomer && <TableCell className="font-bold"></TableCell>}
+                  {isMerchantReportView && <TableCell />}
                   <TableCell className="font-bold">{totals.totalDeliveries}</TableCell>
                   <TableCell className="font-bold">{totals.deliveredDeliveries}</TableCell>
                   <TableCell className="font-bold">{totals.status5Deliveries}</TableCell>
