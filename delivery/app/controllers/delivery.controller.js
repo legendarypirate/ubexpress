@@ -877,7 +877,13 @@ exports.update = (req, res) => {
   const id = req.params.id;
 
   // Validate request (ensure at least one field is provided)
-  if (!req.body.phone && !req.body.address && req.body.price === undefined && !req.body.delivery_date) {
+  if (
+    !req.body.phone &&
+    !req.body.address &&
+    req.body.price === undefined &&
+    !req.body.delivery_date &&
+    req.body.comment === undefined
+  ) {
     return res.status(400).json({
       success: false,
       message: "Request body cannot be empty. At least one field is required.",
@@ -890,6 +896,7 @@ exports.update = (req, res) => {
   if (req.body.address !== undefined) updateData.address = req.body.address;
   if (req.body.price !== undefined) updateData.price = req.body.price === '' ? 0 : req.body.price;
   if (req.body.delivery_date !== undefined) updateData.delivery_date = req.body.delivery_date || null;
+  if (req.body.comment !== undefined) updateData.comment = req.body.comment || '';
 
   // Update the category entry in the database
   Delivery.update(updateData, { where: { id: id } })

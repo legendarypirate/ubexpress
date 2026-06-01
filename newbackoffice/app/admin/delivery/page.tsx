@@ -107,7 +107,13 @@ function DeliveryPageContent() {
   const [bulkDeliveryDate, setBulkDeliveryDate] = useState('');
   const [deliveryHistory, setDeliveryHistory] = useState<DeliveryHistory[]>([]);
   const [selectedDelivery, setSelectedDelivery] = useState<Delivery | null>(null);
-  const [editFormData, setEditFormData] = useState({ phone: '', address: '', price: '', delivery_date: '' });
+  const [editFormData, setEditFormData] = useState({
+    phone: '',
+    address: '',
+    price: '',
+    delivery_date: '',
+    comment: '',
+  });
 
   // Expanded rows
   const [expandedRowKeys, setExpandedRowKeys] = useState<React.Key[]>([]);
@@ -243,6 +249,7 @@ function DeliveryPageContent() {
         address: editFormData.address,
         price: editFormData.price === '' ? 0 : Number(editFormData.price),
         delivery_date: editFormData.delivery_date || undefined,
+        comment: editFormData.comment,
       });
       toast.success('Амжилттай шинэчлэгдлээ');
       setIsEditModalOpen(false);
@@ -377,6 +384,7 @@ function DeliveryPageContent() {
       address: delivery.address,
       price: delivery.price.toString(),
       delivery_date: deliveryDate,
+      comment: delivery.comment ?? '',
     });
     setIsEditModalOpen(true);
   };

@@ -56,6 +56,7 @@ export default function DeliveryForm({
     is_paid: false,
     is_rural: false,
     delivery_date: '',
+    comment: '',
   });
 
   const [selectedProduct, setSelectedProduct] = useState<string>('');
@@ -78,6 +79,7 @@ export default function DeliveryForm({
         is_paid: false,
         is_rural: false,
         delivery_date: today,
+        comment: '',
       });
       setProductList([]);
       setSelectedProduct('');
@@ -164,7 +166,7 @@ export default function DeliveryForm({
         is_paid: formData.is_paid,
         is_rural: formData.is_rural,
         price: Number(formData.price),
-        comment: '',
+        comment: formData.comment.trim(),
         delivery_date: formData.delivery_date || undefined,
         items: productList.map((item) => ({
           good_id: item.productId,
@@ -293,6 +295,17 @@ export default function DeliveryForm({
             placeholder="Үнэ"
             disabled={priceDisabled}
             required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="comment">Тайлбар</Label>
+          <Textarea
+            id="comment"
+            value={formData.comment}
+            onChange={(e) => setFormData((prev) => ({ ...prev, comment: e.target.value }))}
+            placeholder="Тайлбар (заавал биш)"
+            rows={3}
           />
         </div>
 

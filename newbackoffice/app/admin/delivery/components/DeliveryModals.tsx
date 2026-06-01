@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Delivery, DeliveryHistory, DeliveryStatus, User, Region, DeliveryItem } from '../types/delivery';
@@ -209,8 +210,20 @@ interface EditModalProps {
   onClose: () => void;
   onSave: () => void;
   delivery: Delivery | null;
-  formData: { phone: string; address: string; price: string; delivery_date: string };
-  onFormDataChange: (data: { phone: string; address: string; price: string; delivery_date: string }) => void;
+  formData: {
+    phone: string;
+    address: string;
+    price: string;
+    delivery_date: string;
+    comment: string;
+  };
+  onFormDataChange: (data: {
+    phone: string;
+    address: string;
+    price: string;
+    delivery_date: string;
+    comment: string;
+  }) => void;
 }
 
 type ItemEditRow = { quantity: number; unitPrice: number; lineTotal: number };
@@ -431,6 +444,18 @@ export function EditModal({
                 onFormDataChange({ ...formData, delivery_date: e.target.value })
               }
               required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-comment">Тайлбар</Label>
+            <Textarea
+              id="edit-comment"
+              value={formData.comment}
+              onChange={(e) =>
+                onFormDataChange({ ...formData, comment: e.target.value })
+              }
+              placeholder="Тайлбар (заавал биш)"
+              rows={3}
             />
           </div>
 

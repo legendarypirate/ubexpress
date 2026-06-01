@@ -171,6 +171,14 @@ export default function DeliveryTable({
         header: 'Үнэ',
         cell: (info) => info.getValue()?.toLocaleString() || 0,
       }),
+      columnHelper.accessor('comment', {
+        header: 'Тайлбар',
+        cell: (info) => (
+          <div className="text-xs whitespace-normal break-words max-w-xs">
+            {info.getValue() || '-'}
+          </div>
+        ),
+      }),
       columnHelper.accessor('driver_comment', {
         header: 'Ж/тайлбар',
         cell: (info) => (
@@ -244,6 +252,7 @@ export default function DeliveryTable({
               <TableHead>Хаяг</TableHead>
               <TableHead>Төлөв</TableHead>
               <TableHead>Үнэ</TableHead>
+              <TableHead>Тайлбар</TableHead>
               <TableHead>Ж/тайлбар</TableHead>
               {!isMerchant && <TableHead>Жолооч нэр</TableHead>}
               {!isMerchant && <TableHead>Үйлдэл</TableHead>}
@@ -264,6 +273,7 @@ export default function DeliveryTable({
                 <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-12" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-12" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                 {!isMerchant && <TableCell><Skeleton className="h-4 w-20" /></TableCell>}
                 {!isMerchant && <TableCell><Skeleton className="h-4 w-16" /></TableCell>}
@@ -311,7 +321,7 @@ export default function DeliveryTable({
         <TableBody>
           {deliveries.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={isMerchant ? 11 : 12} className="text-center text-gray-400 py-8">
+              <TableCell colSpan={isMerchant ? 12 : 13} className="text-center text-gray-400 py-8">
                 Хүргэлт олдсонгүй
               </TableCell>
             </TableRow>
@@ -398,6 +408,11 @@ export default function DeliveryTable({
                             </TableCell>
                             <TableCell rowSpan={items.length}>
                               {delivery.price?.toLocaleString() || 0}
+                            </TableCell>
+                            <TableCell className="max-w-xs" rowSpan={items.length}>
+                              <div className="text-xs whitespace-normal break-words">
+                                {delivery.comment || '-'}
+                              </div>
                             </TableCell>
                           </>
                         )}
@@ -533,6 +548,11 @@ export default function DeliveryTable({
                         </Badge>
                       </TableCell>
                       <TableCell>{delivery.price?.toLocaleString() || 0}</TableCell>
+                      <TableCell className="max-w-xs">
+                        <div className="text-xs whitespace-normal break-words">
+                          {delivery.comment || '-'}
+                        </div>
+                      </TableCell>
                       <TableCell className="max-w-xs">
                         <div
                           className="text-xs whitespace-normal break-words"

@@ -114,7 +114,7 @@ export interface CreateDeliveryPayload {
   is_paid: boolean;
   is_rural: boolean;
   price: number;
-  comment: string;
+  comment?: string;
   delivery_date?: string;
   items: Array<{
     good_id: string;
@@ -127,5 +127,6 @@ export interface UpdateDeliveryPayload {
   address: string;
   price: number;
   delivery_date?: string;
+  comment?: string;
 }
 
