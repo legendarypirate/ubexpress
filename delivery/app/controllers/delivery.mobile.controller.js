@@ -10,6 +10,7 @@ const moment = require("moment-timezone");
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer');
 const path = require('path');
+const deliveryStock = require("../services/deliveryStock.service");
 
 // Configure Cloudinary (you'll need to set these in environment variables)
 cloudinary.config({
@@ -370,76 +371,6 @@ exports.report = async (req, res) => {
   }
 };
 
-/** Return delivery line items from in_delivery back to warehouse stock. */
-async function restoreItemsToStock(items, delivery, transaction, historyComment) {
-  for (const item of items) {
-    if (!item.good_id) continue;
-    const good = await Good.findByPk(item.good_id, { transaction });
-    if (!good) continue;
-
-    const qty = Number(item.quantity) || 0;
-    if (qty <= 0) continue;
-
-    const currentStock = Number(good.stock) || 0;
-    const currentInDelivery = Number(good.in_delivery) || 0;
-
-    await good.update(
-      {
-        stock: currentStock + qty,
-        in_delivery: Math.max(0, currentInDelivery - qty),
-      },
-      { transaction }
-    );
-
-    await db.good_histories.create(
-      {
-        good_id: item.good_id,
-        type: 4, // Delivery cancelled (back to stock)
-        amount: qty,
-        delivery_id: delivery.id,
-        comment: historyComment,
-      },
-      { transaction }
-    );
-  }
-}
-
-/** Move delivery line items from in_delivery to delivered counts. */
-async function markItemsAsDelivered(items, delivery, transaction) {
-  for (const item of items) {
-    if (!item.good_id) continue;
-    const good = await Good.findByPk(item.good_id, { transaction });
-    if (!good) continue;
-
-    const qty = Number(item.quantity) || 0;
-    if (qty <= 0) continue;
-
-    const currentInDelivery = Number(good.in_delivery) || 0;
-    const currentDelivered = Number(good.delivered) || 0;
-
-    await good.update(
-      {
-        in_delivery: Math.max(0, currentInDelivery - qty),
-        delivered: currentDelivered + qty,
-      },
-      { transaction }
-    );
-
-    await db.good_histories.create(
-      {
-        good_id: item.good_id,
-        type: 5, // Delivery completed (delivered)
-        amount: qty,
-        delivery_id: delivery.id,
-        comment: `Хүргэлт амжилттай (Delivery ID: ${delivery.delivery_id})`,
-      },
-      { transaction }
-    );
-  }
-}
-
-const TERMINAL_DELIVERY_STATUSES = [3, 4]; // delivered, cancelled — stock already settled
-
 exports.completeDelivery = async (req, res) => {
   const handleComplete = async () => {
     const id = req.params.id;
@@ -473,9 +404,10 @@ exports.completeDelivery = async (req, res) => {
       }
 
       const previousStatus = Number(delivery.status);
-      const shouldRestoreToStock =
-        (statusInt === 4 || statusInt === 5) &&
-        !TERMINAL_DELIVERY_STATUSES.includes(previousStatus);
+      const shouldRestoreToStock = deliveryStock.shouldRestoreToStock(
+        statusInt,
+        previousStatus
+      );
 
       const updateData = {
         status: statusInt,
@@ -538,9 +470,9 @@ exports.completeDelivery = async (req, res) => {
           statusInt === 4
             ? `Жолооч цуцалсан (Delivery ID: ${delivery.delivery_id})`
             : `Хаягаар очсон (Delivery ID: ${delivery.delivery_id})`;
-        await restoreItemsToStock(items, delivery, t, historyComment);
-      } else if (statusInt === 3 && previousStatus !== 3) {
-        await markItemsAsDelivered(items, delivery, t);
+        await deliveryStock.restoreItemsToStock(items, delivery, t, historyComment);
+      } else if (deliveryStock.shouldMarkAsDelivered(statusInt, previousStatus)) {
+        await deliveryStock.markItemsAsDelivered(items, delivery, t);
       }
 
       await db.histories.create(
