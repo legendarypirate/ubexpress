@@ -22,10 +22,23 @@ import {
 } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { SearchableSelect, SearchableSelectOption } from '@/components/ui/searchable-select';
-import { fetchReportDeliveries, fetchReportOrders, Order } from './services/report.service';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Mail } from 'lucide-react';
+import {
+  fetchReportDeliveries,
+  fetchReportOrders,
+  sendMerchantReportEmails,
+  Order,
+} from './services/report.service';
 import { fetchDrivers, fetchMerchants } from '../delivery/services/delivery.service';
 import { Delivery, User } from '../delivery/types/delivery';
 import { ReportRow, ReportType } from './types/report';
+
+interface MerchantUser {
+  id: number;
+  username: string;
+  email?: string;
+}
 
 export default function ReportPage() {
   // State
@@ -36,10 +49,11 @@ export default function ReportPage() {
     document.title = 'Тайлан';
   }, []);
   const [reportData, setReportData] = useState<ReportRow[]>([]);
+  const [selectedMerchantIds, setSelectedMerchantIds] = useState<number[]>([]);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   // User info
   const [user, setUser] = useState<any>(null);
-  const isCustomer = user?.role === 2 || user?.role_id === 2;
 
   // Filters
   const [dateRange, setDateRange] = useState<[Date, Date]>([
@@ -49,9 +63,12 @@ export default function ReportPage() {
   const [reportType, setReportType] = useState<ReportType>('driver');
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
+  const isCustomer = user?.role === 2 || user?.role_id === 2;
+  const isMerchantReportView = !isCustomer && reportType !== 'driver';
+
   // Data
   const [drivers, setDrivers] = useState<User[]>([]);
-  const [merchants, setMerchants] = useState<User[]>([]);
+  const [merchants, setMerchants] = useState<MerchantUser[]>([]);
 
   // Load user from localStorage
   useEffect(() => {
@@ -92,7 +109,34 @@ export default function ReportPage() {
   // Reset selected ID when report type changes
   useEffect(() => {
     setSelectedId(null);
+    setSelectedMerchantIds([]);
   }, [reportType]);
+
+  const resolveMerchantMeta = (merchantName: string) => {
+    const merchant = merchants.find((m) => m.username === merchantName);
+    return {
+      merchantId: merchant?.id,
+      email: merchant?.email,
+    };
+  };
+
+  const selectableMerchantIds = reportData
+    .filter((row) => row.merchantId)
+    .map((row) => row.merchantId as number);
+
+  const allMerchantsSelected =
+    selectableMerchantIds.length > 0 &&
+    selectableMerchantIds.every((id) => selectedMerchantIds.includes(id));
+
+  const toggleMerchantSelection = (merchantId: number, checked: boolean) => {
+    setSelectedMerchantIds((prev) =>
+      checked ? [...prev, merchantId] : prev.filter((id) => id !== merchantId)
+    );
+  };
+
+  const toggleSelectAllMerchants = (checked: boolean) => {
+    setSelectedMerchantIds(checked ? [...selectableMerchantIds] : []);
+  };
 
   const loadReportData = async () => {
     if (!dateRange[0] || !dateRange[1]) {
@@ -101,6 +145,7 @@ export default function ReportPage() {
     }
 
     setLoading(true);
+    setSelectedMerchantIds([]);
     try {
       const startDate = dayjs(dateRange[0]).format('YYYY-MM-DD');
       const endDate = dayjs(dateRange[1]).format('YYYY-MM-DD');
@@ -260,6 +305,7 @@ export default function ReportPage() {
           return {
             dateRange: `${startDate} ~ ${endDate}`,
             name,
+            ...(typeToUse !== 'driver' ? resolveMerchantMeta(name) : {}),
             deliveredDeliveries: deliveredCount,
             totalDeliveries: deliveredCount + status5Count, // Sum of delivered + status5
             totalPrice,
@@ -306,6 +352,7 @@ export default function ReportPage() {
           reportRows.push({
             dateRange: `${startDate} ~ ${endDate}`,
             name,
+            ...(typeToUse !== 'driver' ? resolveMerchantMeta(name) : {}),
             deliveredDeliveries: 0,
             totalDeliveries: status5Count, // Sum of delivered (0) + status5
             totalPrice: 0,
@@ -336,6 +383,7 @@ export default function ReportPage() {
           reportRows.push({
             dateRange: `${startDate} ~ ${endDate}`,
             name,
+            ...(typeToUse !== 'driver' ? resolveMerchantMeta(name) : {}),
             deliveredDeliveries: 0,
             totalDeliveries: 0,
             totalPrice: 0,
@@ -423,6 +471,64 @@ export default function ReportPage() {
 
   const handleSubmit = () => {
     loadReportData();
+  };
+
+  const handleSendEmails = async () => {
+    const selectedRows = reportData.filter(
+      (row) => row.merchantId && selectedMerchantIds.includes(row.merchantId)
+    );
+
+    if (selectedRows.length === 0) {
+      toast.warning('Имэйл илгээх харилцагч сонгоно уу');
+      return;
+    }
+
+    const missingEmail = selectedRows.filter((row) => !row.email?.trim());
+    if (missingEmail.length > 0) {
+      toast.error(
+        `Имэйл хаяг байхгүй: ${missingEmail.map((r) => r.name).join(', ')}`
+      );
+      return;
+    }
+
+    if (
+      !confirm(
+        `${selectedRows.length} харилцагчид тайлан имэйлээр илгээх үү?`
+      )
+    ) {
+      return;
+    }
+
+    setSendingEmail(true);
+    try {
+      const result = await sendMerchantReportEmails(
+        selectedRows.map((row) => ({
+          merchantId: row.merchantId!,
+          name: row.name,
+          dateRange: row.dateRange,
+          deliveredDeliveries: row.deliveredDeliveries,
+          totalDeliveries: row.totalDeliveries,
+          totalPrice: row.totalPrice,
+          salary: row.salary,
+          status5Deliveries: row.status5Deliveries,
+          orderCount: row.orderCount || 0,
+        }))
+      );
+
+      const failed = result.results?.filter((r) => !r.success) || [];
+      if (failed.length === 0) {
+        toast.success(result.message || 'Имэйл амжилттай илгээгдлээ');
+        setSelectedMerchantIds([]);
+      } else {
+        toast.warning(
+          `${result.message} Алдаатай: ${failed.map((f) => f.name || f.merchantId).join(', ')}`
+        );
+      }
+    } catch (error: any) {
+      toast.error(error.message || 'Имэйл илгээхэд алдаа гарлаа');
+    } finally {
+      setSendingEmail(false);
+    }
   };
 
   const formatCurrency = (amount: number): string => {
@@ -641,13 +747,46 @@ export default function ReportPage() {
         >
           Export to Excel
         </Button>
+
+        {isMerchantReportView && (
+          <Button
+            onClick={handleSendEmails}
+            disabled={
+              loading ||
+              sendingEmail ||
+              selectedMerchantIds.length === 0 ||
+              reportData.length === 0
+            }
+          >
+            <Mail className="h-4 w-4 mr-2" />
+            {sendingEmail ? 'Илгээж байна...' : 'Имэйл илгээх'}
+          </Button>
+        )}
       </div>
+
+      {isMerchantReportView && selectedMerchantIds.length > 0 && (
+        <p className="text-sm text-gray-600 mb-2">
+          {selectedMerchantIds.length} харилцагч сонгогдсон
+        </p>
+      )}
 
       {/* Report Table */}
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
+              {isMerchantReportView && (
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={allMerchantsSelected}
+                    onCheckedChange={(checked) =>
+                      toggleSelectAllMerchants(checked === true)
+                    }
+                    disabled={selectableMerchantIds.length === 0}
+                    aria-label="Select all merchants"
+                  />
+                </TableHead>
+              )}
               <TableHead>Огноо</TableHead>
               {!isCustomer && (
                 <TableHead>
@@ -666,23 +805,54 @@ export default function ReportPage() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={isCustomer ? 8 : 9} className="text-center py-8">
+                <TableCell
+                  colSpan={isCustomer ? 8 : isMerchantReportView ? 10 : 9}
+                  className="text-center py-8"
+                >
                   Loading...
                 </TableCell>
               </TableRow>
             ) : reportData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={isCustomer ? 8 : 9} className="text-center py-8 text-gray-500">
+                <TableCell
+                  colSpan={isCustomer ? 8 : isMerchantReportView ? 10 : 9}
+                  className="text-center py-8 text-gray-500"
+                >
                   No data available for the selected filters
                 </TableCell>
               </TableRow>
             ) : (
               <>
                 {reportData.map((row, index) => (
-                  <TableRow key={index}>
+                  <TableRow key={row.merchantId ?? `${row.name}-${index}`}>
+                    {isMerchantReportView && (
+                      <TableCell>
+                        <Checkbox
+                          checked={
+                            row.merchantId
+                              ? selectedMerchantIds.includes(row.merchantId)
+                              : false
+                          }
+                          onCheckedChange={(checked) => {
+                            if (row.merchantId) {
+                              toggleMerchantSelection(row.merchantId, checked === true);
+                            }
+                          }}
+                          disabled={!row.merchantId}
+                          aria-label={`Select ${row.name}`}
+                        />
+                      </TableCell>
+                    )}
                     <TableCell>{row.dateRange}</TableCell>
                     {!isCustomer && (
-                      <TableCell className="font-medium">{row.name}</TableCell>
+                      <TableCell className="font-medium">
+                        <div>{row.name}</div>
+                        {isMerchantReportView && (
+                          <div className="text-xs text-gray-500 font-normal">
+                            {row.email || 'Имэйл байхгүй'}
+                          </div>
+                        )}
+                      </TableCell>
                     )}
                     <TableCell>{row.totalDeliveries}</TableCell>
                     <TableCell>{row.deliveredDeliveries}</TableCell>
@@ -699,6 +869,7 @@ export default function ReportPage() {
                 ))}
                 {/* Totals Row */}
                 <TableRow className="bg-gray-50 font-bold">
+                  {isMerchantReportView && <TableCell />}
                   <TableCell className="font-bold">Нийт</TableCell>
                   {!isCustomer && <TableCell className="font-bold"></TableCell>}
                   <TableCell className="font-bold">{totals.totalDeliveries}</TableCell>

@@ -4,6 +4,7 @@ const Op = db.Sequelize.Op;
 const Summary = db.summaries; // Add this
 const Status = db.statuses; // Add this
 const User = db.users; // Add this
+const emailService = require("../services/email.service");
 
 const dayjs = require("dayjs");
 const utc = require("dayjs/plugin/utc");
@@ -95,6 +96,92 @@ exports.getTotalPriceByDriverAndDate = async (req, res) => {
   }
 };
 
+
+/** Send merchant summary report emails (admin report page). */
+exports.sendMerchantReportEmails = async (req, res) => {
+  const { reports } = req.body;
+
+  if (!Array.isArray(reports) || reports.length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: "A non-empty reports array is required.",
+    });
+  }
+
+  const results = [];
+
+  for (const report of reports) {
+    const merchantId = report.merchantId;
+    if (!merchantId) {
+      results.push({
+        merchantId: null,
+        name: report.name,
+        success: false,
+        message: "Missing merchantId",
+      });
+      continue;
+    }
+
+    try {
+      const merchant = await User.findOne({
+        where: { id: merchantId, role_id: 2 },
+      });
+
+      if (!merchant) {
+        results.push({
+          merchantId,
+          name: report.name,
+          success: false,
+          message: "Merchant not found",
+        });
+        continue;
+      }
+
+      if (!merchant.email || !String(merchant.email).trim()) {
+        results.push({
+          merchantId,
+          name: merchant.username,
+          success: false,
+          message: "Merchant has no email address",
+        });
+        continue;
+      }
+
+      await emailService.sendMerchantReportEmail(
+        merchant.email.trim(),
+        merchant.username,
+        report
+      );
+
+      results.push({
+        merchantId,
+        name: merchant.username,
+        email: merchant.email,
+        success: true,
+      });
+    } catch (err) {
+      console.error(`Failed to send report email to merchant ${merchantId}:`, err);
+      results.push({
+        merchantId,
+        name: report.name,
+        success: false,
+        message: err.message || "Failed to send email",
+      });
+    }
+  }
+
+  const sent = results.filter((r) => r.success).length;
+  const failed = results.length - sent;
+
+  res.json({
+    success: failed === 0,
+    message:
+      failed === 0
+        ? `Successfully sent ${sent} email(s).`
+        : `Sent ${sent} email(s), ${failed} failed.`,
+    results,
+  });
+};
 
 exports.getTotalPriceByMerchantAndDate = async (req, res) => {
   const { delivery_ids } = req.body;

@@ -1,4 +1,8 @@
 import { Delivery, DeliveryItem } from '../../delivery/types/delivery';
+import {
+  MerchantReportEmailPayload,
+  SendMerchantReportEmailsResult,
+} from '../types/report';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
@@ -172,6 +176,27 @@ export interface ProductReportResponse {
   items: ProductReportItem[];
   uniqueDeliveryTotal: number; // Sum of unique delivery prices
 }
+
+// Send merchant report emails to selected merchants
+export const sendMerchantReportEmails = async (
+  reports: MerchantReportEmailPayload[]
+): Promise<SendMerchantReportEmailsResult> => {
+  if (!API_URL) {
+    throw new Error('API URL is not configured. Please set NEXT_PUBLIC_API_URL environment variable.');
+  }
+
+  const response = await fetch(`${API_URL}/api/report/send-merchant-emails`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ reports }),
+  });
+
+  const result = await response.json();
+  if (!response.ok) {
+    throw new Error(result.message || 'Failed to send report emails');
+  }
+  return result;
+};
 
 // Fetch product report data
 export const fetchProductReport = async (

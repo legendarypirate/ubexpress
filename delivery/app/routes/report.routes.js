@@ -13,6 +13,8 @@ module.exports = app => {
   
     router.post("/merchant", report.getTotalPriceByMerchantAndDate);
 
+    router.post("/send-merchant-emails", report.sendMerchantReportEmails);
+
     // Retrieve all Tutorials
     router.get("/", report.findAll);
   
