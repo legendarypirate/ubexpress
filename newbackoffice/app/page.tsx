@@ -242,10 +242,7 @@ export default function LandingPage() {
             </div>
             <div className="space-y-4">
               <h1 className="text-4xl font-extrabold leading-[1.15] tracking-tight text-slate-900 sm:text-5xl lg:text-[3.25rem]">
-                Хүргэлтээ{" "}
-                <span className="text-orange-600">хурдан</span>,{" "}
-                удирдлагаа{" "}
-                <span className="text-orange-600">тодорхой</span>
+                <span className="text-orange-600">Хурдан хүргэлт</span>, хялбар удирдлага
               </h1>
               <p className="max-w-lg text-lg leading-relaxed text-slate-600">
                 BeeDeliv нь дэлгүүр, жолооч, админыг нэг системд холбож,
