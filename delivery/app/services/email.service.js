@@ -33,45 +33,136 @@ function formatMoney(amount) {
   }).format(Number(amount) || 0);
 }
 
-function buildMerchantReportHtml(username, report) {
-  const difference = (Number(report.totalPrice) || 0) - (Number(report.salary) || 0);
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function formatReportDate(dateStr) {
+  if (!dateStr) return "-";
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toISOString().slice(0, 10);
+}
+
+function buildDeliveriesDetailHtml(deliveries) {
+  if (!Array.isArray(deliveries) || deliveries.length === 0) {
+    return `
+      <p style="margin: 12px 0 0; color: #6b7280; font-size: 14px;">
+        Энэ тайланд хамаарах хүргэлтийн мэдээлэл байхгүй.
+      </p>
+    `;
+  }
+
+  const rows = deliveries
+    .map((delivery, index) => {
+      const price = formatMoney(delivery.price);
+      return `
+        <tr>
+          <td style="border: 1px solid #e5e7eb; padding: 10px 8px; text-align: center; color: #6b7280;">${index + 1}</td>
+          <td style="border: 1px solid #e5e7eb; padding: 10px 8px; white-space: nowrap;">${escapeHtml(formatReportDate(delivery.date))}</td>
+          <td style="border: 1px solid #e5e7eb; padding: 10px 8px;">${escapeHtml(delivery.address || "-")}</td>
+          <td style="border: 1px solid #e5e7eb; padding: 10px 8px; white-space: nowrap;">${escapeHtml(delivery.phone || "-")}</td>
+          <td style="border: 1px solid #e5e7eb; padding: 10px 8px;">${escapeHtml(delivery.status || "-")}</td>
+          <td style="border: 1px solid #e5e7eb; padding: 10px 8px; white-space: nowrap;">${escapeHtml(delivery.driver || "-")}</td>
+          <td style="border: 1px solid #e5e7eb; padding: 10px 8px; text-align: right; white-space: nowrap; font-weight: 600;">${price} ₮</td>
+        </tr>
+      `;
+    })
+    .join("");
 
   return `
-    <div style="font-family: Arial, sans-serif; color: #111;">
-      <h2 style="margin-bottom: 8px;">Хүргэлтийн тайлан</h2>
-      <p style="margin-top: 0;">Сайн байна уу, <strong>${username}</strong>,</p>
-      <p>Доорх тайланг илгээлээ (<strong>${report.dateRange}</strong>).</p>
-      <table style="border-collapse: collapse; width: 100%; max-width: 640px; margin-top: 16px;">
-        <tr>
-          <td style="border: 1px solid #ddd; padding: 8px; background: #f5f5f5;">Нийт хүргэлт</td>
-          <td style="border: 1px solid #ddd; padding: 8px;">${report.totalDeliveries}</td>
-        </tr>
-        <tr>
-          <td style="border: 1px solid #ddd; padding: 8px; background: #f5f5f5;">Хүргэсэн хүргэлт</td>
-          <td style="border: 1px solid #ddd; padding: 8px;">${report.deliveredDeliveries}</td>
-        </tr>
-        <tr>
-          <td style="border: 1px solid #ddd; padding: 8px; background: #f5f5f5;">Хаягаар очсон</td>
-          <td style="border: 1px solid #ddd; padding: 8px;">${report.status5Deliveries}</td>
-        </tr>
-        <tr>
-          <td style="border: 1px solid #ddd; padding: 8px; background: #f5f5f5;">Захиалгын тоо</td>
-          <td style="border: 1px solid #ddd; padding: 8px;">${report.orderCount || 0}</td>
-        </tr>
-        <tr>
-          <td style="border: 1px solid #ddd; padding: 8px; background: #f5f5f5;">Нийт тооцоо</td>
-          <td style="border: 1px solid #ddd; padding: 8px;">${formatMoney(report.totalPrice)} ₮</td>
-        </tr>
-        <tr>
-          <td style="border: 1px solid #ddd; padding: 8px; background: #f5f5f5;">Цалин</td>
-          <td style="border: 1px solid #ddd; padding: 8px;">${formatMoney(report.salary)} ₮</td>
-        </tr>
-        <tr>
-          <td style="border: 1px solid #ddd; padding: 8px; background: #f5f5f5;">Зөрүү</td>
-          <td style="border: 1px solid #ddd; padding: 8px;">${formatMoney(difference)} ₮</td>
-        </tr>
+    <div style="margin-top: 28px; overflow-x: auto;">
+      <h3 style="margin: 0 0 4px; font-size: 16px; color: #111827;">Тайлангийн дэлгэрэнгүй</h3>
+      <p style="margin: 0 0 12px; color: #6b7280; font-size: 13px;">
+        Тайланд багтсан ${deliveries.length} хүргэлтийн жагсаалт
+      </p>
+      <table style="border-collapse: collapse; width: 100%; min-width: 640px; font-size: 13px;">
+        <thead>
+          <tr>
+            <th style="border: 1px solid #d1d5db; padding: 10px 8px; background: #f3f4f6; text-align: center; width: 36px;">№</th>
+            <th style="border: 1px solid #d1d5db; padding: 10px 8px; background: #f3f4f6; text-align: left;">Огноо</th>
+            <th style="border: 1px solid #d1d5db; padding: 10px 8px; background: #f3f4f6; text-align: left;">Хаяг</th>
+            <th style="border: 1px solid #d1d5db; padding: 10px 8px; background: #f3f4f6; text-align: left;">Утас</th>
+            <th style="border: 1px solid #d1d5db; padding: 10px 8px; background: #f3f4f6; text-align: left;">Төлөв</th>
+            <th style="border: 1px solid #d1d5db; padding: 10px 8px; background: #f3f4f6; text-align: left;">Жолооч</th>
+            <th style="border: 1px solid #d1d5db; padding: 10px 8px; background: #f3f4f6; text-align: right;">Үнэ</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
       </table>
-      <p style="margin-top: 24px; color: #666; font-size: 12px;">UB Express</p>
+    </div>
+  `;
+}
+
+function buildDeliveriesDetailText(deliveries) {
+  if (!Array.isArray(deliveries) || deliveries.length === 0) {
+    return ["Тайлангийн дэлгэрэнгүй:", "  (хүргэлт байхгүй)"];
+  }
+
+  const lines = ["Тайлангийн дэлгэрэнгүй:"];
+  deliveries.forEach((delivery, index) => {
+    lines.push(
+      `  ${index + 1}. ${formatReportDate(delivery.date)} | ${delivery.address || "-"} | ${delivery.phone || "-"} | ${delivery.status || "-"} | ${delivery.driver || "-"} | ${formatMoney(delivery.price)} ₮`
+    );
+  });
+  return lines;
+}
+
+function buildSummaryRow(label, value, highlight) {
+  const valueStyle = highlight
+    ? "border: 1px solid #e5e7eb; padding: 12px 14px; text-align: right; font-weight: 700; font-size: 15px; color: #111827;"
+    : "border: 1px solid #e5e7eb; padding: 12px 14px; text-align: right; color: #111827;";
+  return `
+    <tr>
+      <td style="border: 1px solid #e5e7eb; padding: 12px 14px; background: #f9fafb; color: #374151; width: 45%;">${label}</td>
+      <td style="${valueStyle}">${value}</td>
+    </tr>
+  `;
+}
+
+function buildMerchantReportHtml(username, report) {
+  const difference = (Number(report.totalPrice) || 0) - (Number(report.salary) || 0);
+  const safeUsername = escapeHtml(username);
+  const safeDateRange = escapeHtml(report.dateRange);
+
+  return `
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; color: #111827; background: #f3f4f6; padding: 24px 12px;">
+      <div style="max-width: 720px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden;">
+        <div style="background: #111827; color: #ffffff; padding: 20px 24px;">
+          <p style="margin: 0 0 4px; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.8;">UB Express</p>
+          <h2 style="margin: 0; font-size: 22px; font-weight: 700;">Хүргэлтийн тайлан</h2>
+        </div>
+        <div style="padding: 24px;">
+          <p style="margin: 0 0 8px; font-size: 15px;">Сайн байна уу, <strong>${safeUsername}</strong>,</p>
+          <p style="margin: 0 0 20px; color: #4b5563; font-size: 14px; line-height: 1.5;">
+            <strong>${safeDateRange}</strong> хугацааны тайланг доор хавсаргалаа.
+          </p>
+          <div style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+            <div style="background: #f9fafb; padding: 12px 14px; border-bottom: 1px solid #e5e7eb;">
+              <strong style="font-size: 14px; color: #111827;">Тайлангийн хураангуй</strong>
+            </div>
+            <table style="border-collapse: collapse; width: 100%; font-size: 14px;">
+              ${buildSummaryRow("Нийт хүргэлт", report.totalDeliveries)}
+              ${buildSummaryRow("Хүргэсэн хүргэлт", report.deliveredDeliveries)}
+              ${buildSummaryRow("Хаягаар очсон", report.status5Deliveries)}
+              ${buildSummaryRow("Захиалгын тоо", report.orderCount || 0)}
+              ${buildSummaryRow("Нийт тооцоо", `${formatMoney(report.totalPrice)} ₮`)}
+              ${buildSummaryRow("Цалин", `${formatMoney(report.salary)} ₮`)}
+              ${buildSummaryRow("Зөрүү", `${formatMoney(difference)} ₮`, true)}
+            </table>
+          </div>
+          ${buildDeliveriesDetailHtml(report.deliveries)}
+        </div>
+        <div style="padding: 16px 24px; background: #f9fafb; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 12px;">
+          Энэ имэйлийг UB Express системээс автоматаар илгээсэн. Асуулт байвал бидэнтэй холбогдоно уу.
+        </div>
+      </div>
     </div>
   `;
 }
@@ -81,6 +172,8 @@ function buildMerchantReportText(username, report) {
   return [
     `Хүргэлтийн тайлан — ${username}`,
     `Огноо: ${report.dateRange}`,
+    "",
+    "Тайлангийн хураангуй:",
     `Нийт хүргэлт: ${report.totalDeliveries}`,
     `Хүргэсэн: ${report.deliveredDeliveries}`,
     `Хаягаар очсон: ${report.status5Deliveries}`,
@@ -88,6 +181,10 @@ function buildMerchantReportText(username, report) {
     `Нийт тооцоо: ${formatMoney(report.totalPrice)} ₮`,
     `Цалин: ${formatMoney(report.salary)} ₮`,
     `Зөрүү: ${formatMoney(difference)} ₮`,
+    "",
+    ...buildDeliveriesDetailText(report.deliveries),
+    "",
+    "UB Express",
   ].join("\n");
 }
 

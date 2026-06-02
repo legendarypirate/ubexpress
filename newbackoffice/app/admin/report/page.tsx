@@ -33,7 +33,11 @@ import {
 } from './services/report.service';
 import { fetchDrivers } from '../delivery/services/delivery.service';
 import { Delivery, User } from '../delivery/types/delivery';
-import { ReportRow, ReportType } from './types/report';
+import {
+  MerchantReportEmailDelivery,
+  ReportRow,
+  ReportType,
+} from './types/report';
 
 interface MerchantUser {
   id: number;
@@ -50,6 +54,8 @@ export default function ReportPage() {
     document.title = 'Тайлан';
   }, []);
   const [reportData, setReportData] = useState<ReportRow[]>([]);
+  const [reportDeliveriesByMerchantId, setReportDeliveriesByMerchantId] =
+    useState<Record<number, Delivery[]>>({});
   const [selectedMerchantIds, setSelectedMerchantIds] = useState<number[]>([]);
   const [sendingEmail, setSendingEmail] = useState(false);
 
@@ -113,6 +119,59 @@ export default function ReportPage() {
     setSelectedMerchantIds([]);
   }, [reportType]);
 
+  const getDeliveryStatusLabel = (delivery: Delivery): string => {
+    if (delivery.status_name?.status) {
+      return delivery.status_name.status;
+    }
+    const status = Number(delivery.status);
+    if (status === 5) return 'Хаягаар очсон';
+    if (status === 3) return 'Хүргэсэн';
+    return '-';
+  };
+
+  const toEmailDeliveries = (deliveries: Delivery[]): MerchantReportEmailDelivery[] =>
+    [...deliveries]
+      .sort((a, b) => {
+        const aDate = new Date(a.delivery_date || a.createdAt).getTime();
+        const bDate = new Date(b.delivery_date || b.createdAt).getTime();
+        return aDate - bDate;
+      })
+      .map((delivery) => ({
+        id: delivery.id,
+        date: delivery.delivery_date || delivery.createdAt,
+        address: delivery.address,
+        phone: delivery.phone,
+        status: getDeliveryStatusLabel(delivery),
+        price: parseFloat(delivery.price?.toString() || '0'),
+        driver: delivery.driver?.username,
+      }));
+
+  const buildMerchantDeliveriesMap = (
+    groupedStatus3: Record<string, Delivery[]>,
+    groupedStatus5: Record<string, Delivery[]>
+  ): Record<number, Delivery[]> => {
+    const map: Record<number, Delivery[]> = {};
+    const groupKeys = new Set([
+      ...Object.keys(groupedStatus3),
+      ...Object.keys(groupedStatus5),
+    ]);
+
+    groupKeys.forEach((key) => {
+      const combined = [
+        ...(groupedStatus3[key] || []),
+        ...(groupedStatus5[key] || []),
+      ];
+      if (combined.length === 0) return;
+
+      const { merchantId } = resolveMerchantMeta(key, combined[0]);
+      if (!merchantId) return;
+
+      map[merchantId] = combined;
+    });
+
+    return map;
+  };
+
   const resolveMerchantMeta = (
     groupKey: string,
     sample?: { merchant_id?: number; merchant?: { username?: string } }
@@ -157,6 +216,7 @@ export default function ReportPage() {
 
     setLoading(true);
     setSelectedMerchantIds([]);
+    setReportDeliveriesByMerchantId({});
     try {
       const startDate = dayjs(dateRange[0]).format('YYYY-MM-DD');
       const endDate = dayjs(dateRange[1]).format('YYYY-MM-DD');
@@ -414,6 +474,15 @@ export default function ReportPage() {
       });
 
       setReportData(reportRows);
+
+      const typeForDeliveries = isCustomer ? 'now' : reportType;
+      if (typeForDeliveries !== 'driver') {
+        setReportDeliveriesByMerchantId(
+          buildMerchantDeliveriesMap(groupedData, groupedStatus5Data)
+        );
+      } else {
+        setReportDeliveriesByMerchantId({});
+      }
     } catch (error: any) {
       console.error('Error loading report data:', error);
       toast.error(error.message || 'Failed to load report data');
@@ -533,6 +602,9 @@ export default function ReportPage() {
           salary: row.salary,
           status5Deliveries: row.status5Deliveries,
           orderCount: row.orderCount || 0,
+          deliveries: toEmailDeliveries(
+            reportDeliveriesByMerchantId[row.merchantId!] || []
+          ),
         }))
       );
 

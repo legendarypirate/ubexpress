@@ -17,6 +17,16 @@ export interface ReportRow {
   orderCount: number;
 }
 
+export interface MerchantReportEmailDelivery {
+  id: number;
+  date: string;
+  address: string;
+  phone: string;
+  status: string;
+  price: number;
+  driver?: string;
+}
+
 export interface MerchantReportEmailPayload {
   merchantId: number;
   name: string;
@@ -27,6 +37,7 @@ export interface MerchantReportEmailPayload {
   salary: number;
   status5Deliveries: number;
   orderCount: number;
+  deliveries?: MerchantReportEmailDelivery[];
 }
 
 export interface SendMerchantReportEmailsResult {
