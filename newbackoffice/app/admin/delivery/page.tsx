@@ -130,8 +130,8 @@ function DeliveryPageContent() {
   // User info
   const [user, setUser] = useState<any>(null);
   const [username, setUsername] = useState<string | null>(null);
-  const isMerchant = user?.role === 2;
-  const merchantId = isMerchant ? user.id : null;
+  const isMerchant = user?.role === 2 || user?.role_id === 2;
+  const merchantId = isMerchant ? (user?.id || user?.user_id || null) : null;
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -145,7 +145,7 @@ function DeliveryPageContent() {
     const storedUsername =
       typeof window !== 'undefined' ? localStorage.getItem('username') : null;
 
-    if (storedUser) setUser(JSON.parse(storedUser));
+    setUser(storedUser ? JSON.parse(storedUser) : null);
     if (storedPermissions) setPermissions(JSON.parse(storedPermissions));
     if (storedUsername) setUsername(storedUsername);
 
@@ -170,14 +170,18 @@ function DeliveryPageContent() {
     loadData();
   }, []);
 
-  // Fetch deliveries
+  // Fetch deliveries (wait for user so merchant role gets correct filter on refresh)
   useEffect(() => {
+    if (user === null) return;
+
+    let cancelled = false;
+
     const loadDeliveries = async () => {
       setLoading(true);
       try {
         const filters: Filters = {
           phone: phoneFilter || undefined,
-          merchantId: merchantFilter || (isMerchant ? merchantId : undefined),
+          merchantId: merchantFilter || (isMerchant ? merchantId ?? undefined : undefined),
           driverId: driverFilter || undefined,
           districtId: districtFilter || undefined,
           statusIds: selectedStatuses.length > 0 ? selectedStatuses : undefined,
@@ -186,18 +190,26 @@ function DeliveryPageContent() {
         };
 
         const result = await fetchDeliveries(filters, pagination);
+        if (cancelled) return;
+
         setDeliveries(result.data);
         setPagination((prev) => ({ ...prev, total: result.pagination.total }));
       } catch (error) {
+        if (cancelled) return;
         console.error('Error fetching deliveries:', error);
         toast.error('Хүргэлт ачааллахад алдаа гарлаа');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     loadDeliveries();
+
+    return () => {
+      cancelled = true;
+    };
   }, [
+    user,
     pagination.current,
     pagination.pageSize,
     phoneFilter,
