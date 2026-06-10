@@ -1,8 +1,11 @@
+const crypto = require("crypto");
 const db = require("../models");
 const User = db.users;
 const Op = db.Sequelize.Op;
 const bcrypt = require('bcryptjs');
 const saltRounds = 10; // Number of salt rounds for bcrypt
+
+const createApiKey = () => crypto.randomBytes(32).toString("hex");
 
 // Create and Save a new User
 exports.create = async (req, res) => {
@@ -68,6 +71,10 @@ exports.create = async (req, res) => {
       address: req.body.address,
       report_price: req.body.report_price || 7000
     };
+
+    if (Number(req.body.role_id) === 2) {
+      user.api_key = createApiKey();
+    }
 
     // Save User in the database
     const data = await User.create(user);
@@ -295,6 +302,54 @@ exports.deleteAll = (req, res) => {
           err.message || "Some error occurred while removing all User."
       });
     });
+};
+
+// Generate or return API key for a merchant (role_id = 2)
+exports.generateApiKey = async (req, res) => {
+  const id = req.params.id;
+  const regenerate = req.query.regenerate === "true";
+
+  try {
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: `Cannot find User with id=${id}.`,
+      });
+    }
+
+    if (user.role_id !== 2) {
+      return res.status(400).json({
+        success: false,
+        message: "API keys are only available for merchants (role_id = 2).",
+      });
+    }
+
+    if (!user.api_key || regenerate) {
+      await user.update({ api_key: createApiKey() });
+      await user.reload();
+    }
+
+    return res.json({
+      success: true,
+      data: {
+        id: user.id,
+        username: user.username,
+        merchant_id: user.id,
+        api_key: user.api_key,
+      },
+      message: regenerate
+        ? "API key regenerated."
+        : user.api_key
+          ? "API key retrieved."
+          : "API key generated.",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Failed to generate API key.",
+    });
+  }
 };
 
 // find all published User

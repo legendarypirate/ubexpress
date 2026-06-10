@@ -13,6 +13,7 @@ module.exports = app => {
     router.use(authenticate);
 
     router.post("/", user.create);
+    router.post("/:id/api-key", user.generateApiKey);
 
     // Retrieve a single Tutorial with id
     router.get("/:id", user.findOne);

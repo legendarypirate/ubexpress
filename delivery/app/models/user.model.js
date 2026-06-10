@@ -45,6 +45,11 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING(32),
         allowNull: true,
       },
+      api_key: {
+        type: Sequelize.STRING(64),
+        allowNull: true,
+        unique: true,
+      },
     });
     return User;
   };
