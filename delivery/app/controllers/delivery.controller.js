@@ -709,15 +709,50 @@ exports.findAll = async (req, res) => {
       if (statusArray.length > 0) where.status = { [Op.in]: statusArray };
     }
 
-    // 🗓️ Delivery Date Filter - use start_date and end_date to filter by delivery_date column
+    // 🗓️ Delivery Date Filter - match delivery_date or, when null, fall back to createdAt
     if (start_date && end_date) {
-      where.delivery_date = {
-        [Op.between]: [start_date, end_date],
-      };
+      const startOfDay = new Date(`${start_date}T00:00:00`);
+      const endOfDay = new Date(`${end_date}T23:59:59.999`);
+      where[Op.and] = [
+        ...(where[Op.and] || []),
+        {
+          [Op.or]: [
+            { delivery_date: { [Op.between]: [start_date, end_date] } },
+            {
+              delivery_date: { [Op.is]: null },
+              createdAt: { [Op.between]: [startOfDay, endOfDay] },
+            },
+          ],
+        },
+      ];
     } else if (start_date) {
-      where.delivery_date = { [Op.gte]: start_date };
+      const startOfDay = new Date(`${start_date}T00:00:00`);
+      where[Op.and] = [
+        ...(where[Op.and] || []),
+        {
+          [Op.or]: [
+            { delivery_date: { [Op.gte]: start_date } },
+            {
+              delivery_date: { [Op.is]: null },
+              createdAt: { [Op.gte]: startOfDay },
+            },
+          ],
+        },
+      ];
     } else if (end_date) {
-      where.delivery_date = { [Op.lte]: end_date };
+      const endOfDay = new Date(`${end_date}T23:59:59.999`);
+      where[Op.and] = [
+        ...(where[Op.and] || []),
+        {
+          [Op.or]: [
+            { delivery_date: { [Op.lte]: end_date } },
+            {
+              delivery_date: { [Op.is]: null },
+              createdAt: { [Op.lte]: endOfDay },
+            },
+          ],
+        },
+      ];
     }
 
     // 🔍 Query database

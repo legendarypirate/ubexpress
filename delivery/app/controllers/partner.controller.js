@@ -4,6 +4,14 @@ const Status = db.statuses;
 const DeliveryItem = db.delivery_items;
 const adminPush = require("../services/adminPush.service");
 
+const getTodayLocal = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const generateDeliveryId = async () => {
   const characters =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -54,7 +62,7 @@ exports.createDelivery = async (req, res) => {
       is_rural: req.body.is_rural ?? false,
       price: req.body.price ?? 0,
       comment: req.body.comment || "",
-      delivery_date: req.body.delivery_date || null,
+      delivery_date: req.body.delivery_date || getTodayLocal(),
     };
 
     const delivery = await Delivery.create(newDel, { transaction: t });
