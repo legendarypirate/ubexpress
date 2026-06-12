@@ -34,6 +34,7 @@ export interface Delivery {
   merchant_id?: number;
   phone: string;
   address: string;
+  pickup_address?: string | null;
   status: number | string;
   price: number;
   comment: string;
@@ -109,6 +110,7 @@ export interface CreateDeliveryPayload {
   merchant_id: number;
   phone: string;
   address: string;
+  pickup_address?: string;
   status: number;
   dist_id: number;
   is_paid: boolean;
@@ -125,6 +127,7 @@ export interface CreateDeliveryPayload {
 export interface UpdateDeliveryPayload {
   phone: string;
   address: string;
+  pickup_address?: string;
   price: number;
   delivery_date?: string;
   comment?: string;

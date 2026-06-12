@@ -14,6 +14,11 @@ module.exports = (sequelize, Sequelize) => {
         allowNull: false,
         defaultValue: 0
       },
+      pickup_address: {
+        type: Sequelize.STRING,
+        allowNull: true,
+        defaultValue: null,
+      },
       status: {
         type: Sequelize.INTEGER,
         defaultValue: 0

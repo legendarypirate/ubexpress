@@ -151,6 +151,14 @@ export default function DeliveryTable({
           </div>
         ),
       }),
+      columnHelper.accessor('pickup_address', {
+        header: 'Очиж авах хаяг',
+        cell: (info) => (
+          <div className="text-base text-gray-700 whitespace-normal break-words">
+            <DecryptedField value={info.getValue()} />
+          </div>
+        ),
+      }),
       columnHelper.accessor('status_name', {
         header: 'Төлөв',
         cell: (info) => {
@@ -250,6 +258,7 @@ export default function DeliveryTable({
               <TableHead>Тоо ширхэг</TableHead>
               <TableHead>Утас</TableHead>
               <TableHead>Хаяг</TableHead>
+              <TableHead>Очиж авах хаяг</TableHead>
               <TableHead>Төлөв</TableHead>
               <TableHead>Үнэ</TableHead>
               <TableHead>Тайлбар</TableHead>
@@ -269,6 +278,7 @@ export default function DeliveryTable({
                 {!isMerchant && <TableCell><Skeleton className="h-4 w-24" /></TableCell>}
                 <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-16" /></TableCell>
                 <TableCell><Skeleton className="h-4 w-12" /></TableCell>
@@ -321,7 +331,7 @@ export default function DeliveryTable({
         <TableBody>
           {deliveries.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={isMerchant ? 12 : 13} className="text-center text-gray-400 py-8">
+              <TableCell colSpan={isMerchant ? 13 : 14} className="text-center text-gray-400 py-8">
                 Хүргэлт олдсонгүй
               </TableCell>
             </TableRow>
@@ -394,6 +404,13 @@ export default function DeliveryTable({
                                 className="text-base text-gray-700 whitespace-normal break-words"
                               >
                                 <DecryptedField value={delivery.address} />
+                              </div>
+                            </TableCell>
+                            <TableCell rowSpan={items.length} className="max-w-xs">
+                              <div 
+                                className="text-base text-gray-700 whitespace-normal break-words"
+                              >
+                                <DecryptedField value={delivery.pickup_address} />
                               </div>
                             </TableCell>
                             <TableCell rowSpan={items.length}>
@@ -535,6 +552,13 @@ export default function DeliveryTable({
                           className="text-base text-gray-700 whitespace-normal break-words"
                         >
                           <DecryptedField value={delivery.address} />
+                        </div>
+                      </TableCell>
+                      <TableCell className="max-w-xs">
+                        <div 
+                          className="text-base text-gray-700 whitespace-normal break-words"
+                        >
+                          <DecryptedField value={delivery.pickup_address} />
                         </div>
                       </TableCell>
                       <TableCell>

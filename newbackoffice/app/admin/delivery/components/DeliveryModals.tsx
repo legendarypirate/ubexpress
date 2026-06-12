@@ -213,6 +213,7 @@ interface EditModalProps {
   formData: {
     phone: string;
     address: string;
+    pickup_address: string;
     price: string;
     delivery_date: string;
     comment: string;
@@ -220,6 +221,7 @@ interface EditModalProps {
   onFormDataChange: (data: {
     phone: string;
     address: string;
+    pickup_address: string;
     price: string;
     delivery_date: string;
     comment: string;
@@ -418,6 +420,17 @@ export function EditModal({
                 onFormDataChange({ ...formData, address: e.target.value })
               }
               required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-pickup_address">Очиж авах хаяг</Label>
+            <Input
+              id="edit-pickup_address"
+              value={formData.pickup_address}
+              onChange={(e) =>
+                onFormDataChange({ ...formData, pickup_address: e.target.value })
+              }
+              placeholder="Очиж авах хаяг"
             />
           </div>
           <div className="space-y-2">

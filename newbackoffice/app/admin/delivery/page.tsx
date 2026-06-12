@@ -110,6 +110,7 @@ function DeliveryPageContent() {
   const [editFormData, setEditFormData] = useState({
     phone: '',
     address: '',
+    pickup_address: '',
     price: '',
     delivery_date: '',
     comment: '',
@@ -259,6 +260,7 @@ function DeliveryPageContent() {
       await updateDelivery(selectedDelivery.id, {
         phone: editFormData.phone,
         address: editFormData.address,
+        pickup_address: editFormData.pickup_address.trim() || undefined,
         price: editFormData.price === '' ? 0 : Number(editFormData.price),
         delivery_date: editFormData.delivery_date || undefined,
         comment: editFormData.comment,
@@ -394,6 +396,7 @@ function DeliveryPageContent() {
     setEditFormData({
       phone: delivery.phone,
       address: delivery.address,
+      pickup_address: delivery.pickup_address ?? '',
       price: delivery.price.toString(),
       delivery_date: deliveryDate,
       comment: delivery.comment ?? '',

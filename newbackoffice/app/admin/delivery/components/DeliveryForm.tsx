@@ -51,6 +51,7 @@ export default function DeliveryForm({
     merchantId: merchantId?.toString() || '',
     phone: '',
     address: '',
+    pickup_address: '',
     dist_id: '',
     price: '',
     is_paid: false,
@@ -74,6 +75,7 @@ export default function DeliveryForm({
         merchantId: merchantId?.toString() || '',
         phone: '',
         address: '',
+        pickup_address: '',
         dist_id: '',
         price: '',
         is_paid: false,
@@ -161,6 +163,7 @@ export default function DeliveryForm({
         merchant_id: isMerchant ? merchantId : parseInt(formData.merchantId),
         phone: formData.phone,
         address: formData.address,
+        pickup_address: formData.pickup_address.trim() || undefined,
         status: 1,
         dist_id: parseInt(formData.dist_id),
         is_paid: formData.is_paid,
@@ -251,6 +254,16 @@ export default function DeliveryForm({
             onChange={(e) => setFormData((prev) => ({ ...prev, address: e.target.value }))}
             placeholder="Хаяг"
             required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="pickup_address">Очиж авах хаяг</Label>
+          <Input
+            id="pickup_address"
+            value={formData.pickup_address}
+            onChange={(e) => setFormData((prev) => ({ ...prev, pickup_address: e.target.value }))}
+            placeholder="Очиж авах хаяг"
           />
         </div>
 

@@ -267,6 +267,7 @@ exports.create = async (req, res) => {
       merchant_id: req.body.merchant_id,
       phone: req.body.phone,
       address: req.body.address,
+      pickup_address: req.body.pickup_address || null,
       dist_id: req.body.dist_id,
       status: 1,
       is_paid: req.body.is_paid ?? false,
@@ -922,6 +923,7 @@ exports.update = (req, res) => {
   if (
     !req.body.phone &&
     !req.body.address &&
+    req.body.pickup_address === undefined &&
     req.body.price === undefined &&
     !req.body.delivery_date &&
     req.body.comment === undefined
@@ -936,6 +938,7 @@ exports.update = (req, res) => {
   const updateData = {};
   if (req.body.phone !== undefined) updateData.phone = req.body.phone;
   if (req.body.address !== undefined) updateData.address = req.body.address;
+  if (req.body.pickup_address !== undefined) updateData.pickup_address = req.body.pickup_address || null;
   if (req.body.price !== undefined) updateData.price = req.body.price === '' ? 0 : req.body.price;
   if (req.body.delivery_date !== undefined) updateData.delivery_date = req.body.delivery_date || null;
   if (req.body.comment !== undefined) updateData.comment = req.body.comment || '';
